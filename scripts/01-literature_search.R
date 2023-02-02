@@ -87,23 +87,30 @@ hist(igraph::strength(g), 100, main="Histogram of node strengths", xlab="Node st
 #selected_terms
 
 ## Grouping keywords (manually) to write a new 'refined' search string ##NOTE excluding fish/non-terrestrial
-grouped_terms <-list(
+grouped_terms1 <-list(
   urban=c("urban","urban area*","urban landscape*","city","cities","town*"),
-  biodiversity=c("biodiversity","wildlife","vegetation","plant*","tree*","bird*","avian","arthropod*","insect*","mammal*","herp*","rept*", "amphibian*"),
-  connectivity=c("connectivity","functional connectivity","structural connectivity","habitat connectivity","ecological connectivity","habitat network*","ecological network*","corridor*","habitat corridor*","ecological corridor*" ,"movement*","dispersal","least-cost","least cost","circuit theory","landscape resistance*", "landscape permeability"),
-  outcomes=c("occup*","occurr*","abundan*", "species richness", "diversity", "speci* reponse*", "gene* diversity","gene flow", "speci* distribut*", "speci* densit*", "speci* composit*", "speci* assemblage*", "communit* composit*", "communit* assemblage*", "popul* persist*","popul* response*", "distribut* pattern*", "spatial* distribut*"))
+  biodiversity=c("biodiversity","wildlife","vegetation","plant*","tree*","bird*","avian","arthropod*","insect*","mammal*","herptile*","reptile*", "amphibian*"),
+  connectivity=c("connectivity","landscape connectivity","functional connectivity","structural connectivity","habitat connectivity","ecological connectivity","habitat network*","ecological network*","corridor*","habitat corridor*","ecological corridor*","least-cost","least cost","circuit theory","circuit-theory","landscape resistance*","landscape permeability"),
+  outcomes=c("occup*","occurr*","abundan*", "species richness", "diversity", "speci* response*", "gene* diversity","gene flow", "speci* distribut*", "speci* densit*", "speci* composit*", "speci* assemblage*", "communit* composit*", "communit* assemblage*", "popul* persist*","popul* response*", "distribut* pattern*", "spatial* distribut*","movement*","dispersal"))
 
-grouped_terms
+grouped_terms1
 
+# grouped_terms2 <-list(
+#   urban=c("urban","urban areas","urban landscapes","city","cities","towns"),
+#   biodiversity=c("biodiversity","wildlife","vegetation","plants","trees","birds","avian","arthropods","insects","mammals","herptiles","reptiles", "amphibians"),
+#   connectivity=c("connectivity", "landscape connectivity","functional connectivity","structural connectivity","habitat connectivity","ecological connectivity","habitat networks","ecological networks","corridors","habitat corridors","ecological corridors","least-cost","least cost","circuit theory","circuit-theory","landscape resistance","landscape permeability"),
+#   outcomes=c("occupancy","occurrence","abundance", "species richness", "diversity", "species responses", "genetic diversity","gene flow", "species distributions", "species density", "species composition", "species assemblages", "community composition", "community assemblages", "population persistence","population responses", "distribution patterns", "spatial distributions","movements","dispersal"))
+# 
+# grouped_terms2
 
 # 3. Writing boolean searches for databases ----------------------------------
 # from the newly grouped terms
 write_search(
-  grouped_terms,
+  grouped_terms1,
   languages = "English",
-  exactphrase = TRUE,
-  stemming = FALSE,
-  closure = "left",
-  directory= "./output/upd_searchstring", #saved to output folder
-  writesearch = TRUE
+  exactphrase = T,
+  stemming = F,
+  closure = "full",
+  directory= "./output/final_searchstring", #saved to output folder
+  writesearch = T
 )
