@@ -111,6 +111,6 @@ write_search(
   exactphrase = T,
   stemming = F,
   closure = "full",
-  directory= "./output/final_searchstring", #saved to output folder
+  directory= "./output/final_searchstring_01", #saved to output folder
   writesearch = T
 )
