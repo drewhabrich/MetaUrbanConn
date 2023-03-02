@@ -1,10 +1,10 @@
 # 1. Load relevant packages into library -------------------------------------
 #install.packages("tidyverse","metagear","PRISMA2020","rcrossref) install packages as needed
-library(plyr) #plyr needs to be loaded BEFORE tidyverse to prevent issues with dplyr
-library(tidyverse)
-library(synthesisr)
-library(revtools)
-library(lubridate) #this should be in the tidyverse, if for some reason it isn't you can install it seperately
+library(plyr) #v1.8.8; plyr needs to be loaded BEFORE tidyverse to prevent issues with dplyr
+library(tidyverse) #v1.3.2
+library(synthesisr) #v0.3.0
+library(revtools) #v0.4.1
+library(lubridate) #v1.9.1; this should be in the tidyverse, if for some reason it isn't you can install it separately
 
 # 2. Read in the bibliographic data set ------------------------------------
 # rm(list=ls()) #remove everything in the R environment, use as needed.
@@ -72,7 +72,7 @@ dat %>% filter(is.na(url)) %>% summarise(across(everything(), ~ sum(is.na(.)))) 
 # 2.2 FILL MISSING BIBLIOGRAPHIC DATA ---------------------------------------
 # Can we populate the missing cells based on doi, title, author/year using 'crossref'?
 # install.packages("crossref") #uncomment if install is needed
-library(rcrossref)
+library(rcrossref) #v1.2.0
 dat %>% filter(is.na(doi)) %>% nrow() #682 rows missing DOI
 
 # fill missing years based on doi
@@ -131,4 +131,4 @@ dat %>%
 # 4 screening -------------------------------------------------------------
 bibdat<-as.data.frame(dat)
 screen_topics(bibdat)
-
+screen

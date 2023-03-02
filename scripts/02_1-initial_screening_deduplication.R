@@ -2,8 +2,8 @@
 # The .ris files were 'repaired' e.g. had empty info filled automatically using doi management and 'bibfix' shiny app
 
 # 1. Load relevant packages into library -------------------------------------
-library(tidyverse)
-library(synthesisr)
+library(tidyverse) #v1.3.2
+library(synthesisr) #v0.3.0
 
 # 2. Import search results and deduplicate --------------------------------
 bibfiles<-list.files("./raw_data/bibfix_results/", full.names=T) #create a list of all the files in the data directory
