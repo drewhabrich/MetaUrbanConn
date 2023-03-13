@@ -131,4 +131,10 @@ dat %>%
 # 4 screening -------------------------------------------------------------
 bibdat<-as.data.frame(dat)
 screen_topics(bibdat)
-screen
+
+# 4.1 generating topics maps
+topicmap<-readRDS("./output/revtools_screening.rds")
+screen_topics(topicmap)
+class(topicmap)
+screen_topics_progress(topicmap)
+

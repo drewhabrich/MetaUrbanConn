@@ -1,21 +1,22 @@
-# 1. Load relevant packages into library -------------------------------------
-#install.packages("tidyverse","metagear","PRISMA2020","rcrossref) install packages as needed
+##### 1. Load relevant packages into library -------------------------------------
+## install.packages("tidyverse","metagear","PRISMA2020","rcrossref) install packages as needed
 library(plyr) #plyr needs to be loaded BEFORE tidyverse to prevent issues with dplyr
-library(tidyverse)
-library(synthesisr)
-library(PRISMA2020)
-library(metagear)
-library(lubridate) #this should be in the tidyverse, if for some reason it isn't you can install it seperately
+library(tidyverse) #v1.3.2
+library(synthesisr) #v0.3.0
+library(metagear) #v0.7.0
+library(lubridate) #v1.9.2 this should be in the tidyverse
+library(rcrossref) #v1.2.0
 
-# 2. Read in the bibliographic data set ------------------------------------
+###### 2. Read in the bibliographic data set ------------------------------------
 # rm(list=ls()) #remove everything in the R environment, use as needed.
-initial_dat<-read_refs(filename="./output/deduplicated_bib_02-1.ris", return_df=T)
+initial_dat <-
+  read_refs(filename = "./output/deduplicated_bib_02-1.ris", return_df = T)
 
 # let's check the structure and clean the data so that we can systematically screen
 str(initial_dat) #all columns are 'character'
 ncol(initial_dat) #16 columns of data
 
-# 2.1. Data cleaning and exploration --------------------------------------
+### 2.1. Data cleaning and exploration --------------------------------------
 #How many of the columns are *mostly* empty
 initial_dat %>% 
   summarise(
@@ -30,7 +31,8 @@ initial_dat %>% filter(is.na(author)) %>% as_tibble()
 initial_dat %>% filter(is.na(year)) %>% as_tibble()
 
 initial_dat <- initial_dat %>% mutate(year=as.numeric(year)) %>% as_tibble() #change year to be numeric instead of character
-#save a seperate dataframe to work with
+
+## Save a seperate dataframe to work with ##
 dat<-initial_dat 
 
 # How many empty columns are there?
@@ -39,17 +41,17 @@ dat %>%
     across(everything(), ~ sum(is.na(.))) %>% as_tibble()
   )
 
-# Is there a pattern to which entries are missing DOI? Or URLS?
+### Is there a pattern to which entries are missing DOI? Or URLS?
 ## 2.1.1 DOI MISSING
 dat %>% filter(is.na(doi)) %>% ggplot(aes(x = year)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
   labs(x = "Year", y = "Publication count", title = "Search results with missing DOI by year") + xlim(1980,NA)
 # where are these entries missing other data?
 dat %>% filter(is.na(doi)) %>% summarise(across(everything(), ~ sum(is.na(.)))) #all missing doi are missing the journal entry too...
-dat %>% filter(is.na(doi)) %>% group_by(source) %>% count(source, sort=T) 
+dat %>% filter(is.na(doi)) %>% group_by(source) %>% count(source) 
 #Results from PROQUEST put the source here instead of 'Journal' likely because there are a number of theses/dissertations that weren't published in a peer-reviewed journal
 # visualize frequencies with a plot 
-dat %>% filter(is.na(doi)) %>% group_by(source) %>% count(source, sort=T) %>% 
+dat %>% filter(is.na(doi)) %>% group_by(source) %>% count(source) %>% 
   ggplot(aes(y = reorder(source, n), x=n)) + #reorder the y-axis by the n column (frequency)
   geom_bar(stat="identity", fill = "steelblue", color = "white") +
   labs(x = "Frequency", y = "Source", title = "Frequency of entries by source") +
@@ -72,10 +74,8 @@ dat %>% filter(is.na(url)) %>% filter(year=="2022") #They have DOIs so its fine 
 # where are these entries missing other data?
 dat %>% filter(is.na(url)) %>% summarise(across(everything(), ~ sum(is.na(.)))) #all missing doi are missing the journal entry too...
 
-# 2.2 FILL MISSING BIBLIOGRAPHIC DATA ---------------------------------------
-# Can we populate the missing cells based on doi, title, author/year using 'crossref'?
-# install.packages("crossref") #uncomment if install is needed
-library(rcrossref)
+### 2.2 FILL MISSING BIBLIOGRAPHIC DATA ---------------------------------------
+## Can we populate the missing cells based on doi, title, author/year using 'crossref' package?
 dat %>% filter(is.na(doi)) %>% nrow() #682 rows missing DOI
   
 # fill missing years based on doi
@@ -95,61 +95,8 @@ dat %>%
     across(everything(), ~ sum(is.na(.))) %>% as_tibble()
   )
 
-# 2.3 Retrieve missing titles, abstracts, and DOIs ------------------------
-# bib_df <- dat
-# # Retrieve missing titles, abstracts, and DOIs
-# for (i in seq_along(bib_df$title)) {
-#   # Check if the title, abstract, or DOI is missing
-#   if (is.na(bib_df$title[i]) | is.na(bib_df$abstract[i]) | is.na(bib_df$doi[i])) {
-#     # Retrieve the missing information using the DOI if available
-#     if (!is.na(bib_df$doi[i])) {
-#       result <- cr_works(doi = bib_df$doi[i])
-#       if (length(result$data) > 0 && !is.atomic(result$data[[1]]) && length(result$data[[1]]$title) > 0) {
-#         bib_df$title[i] <- result$data[[1]]$title
-#       }
-#       if (length(result$data) > 0 && !is.atomic(result$data[[1]]) && length(result$data[[1]]$abstract) > 0) {
-#         bib_df$abstract[i] <- result$data[[1]]$abstract
-#       }
-#     }
-#     # If the DOI is not available, try searching by the title
-#     else {
-#       result <- cr_works(query = bib_df$title[i])
-#       if (result$total_results > 0) {
-#         bib_df$doi[i] <- result$data[[1]]$DOI
-#         if (length(result$data) > 0 && !is.atomic(result$data[[1]]) && length(result$data[[1]]$abstract) > 0) {
-#           bib_df$abstract[i] <- result$data[[1]]$abstract
-#         }
-#       }
-#     }
-#   }
-# }
-
-#View(result$data)
-
-
-# 2.4 Journal shortnames extraction-----------------------------------------
-# # Define a function to get the short container title for a given DOI
-# get_short_container_title <- function(doi) {
-#   result <- cr_works(doi = doi, select = "short.container.title")
-#   if (is.na(result$`short.container.title`)) {
-#     return(NA)
-#   } else {
-#     return(result$`short.container.title`)
-#   }
-# }
-# 
-# # Apply the function to each URL in the data frame
-# dat$short_container_title <- sapply(dat$url, function(url) {
-#   doi <- cr_parse_doi(url)
-#   if (is.na(doi)) {
-#     return(NA)
-#   } else {
-#     return(get_short_container_title(doi))
-#   }
-# })
-
-# 3 Bibliography data exploration -----------------------------------------
-# data structure
+##### 3 Bibliography data exploration -----------------------------------------
+## check the data structure
 head(dat)
 str(dat)
 dat %>% summarise(across(everything(), ~ sum(is.na(.)))) #Columns with # of NAs 
@@ -177,28 +124,139 @@ dat %>% summarise(mean_numauth=mean(num_authors),
 n_distinct(dat$journal) #distinct journal entries (SOME MAY BE DUPLICATEDDD, this only matches on EXACT)
 dat %>% 
   group_by(journal) %>% 
-  count(journal, sort=T) %>% 
+  count(journal) %>% 
   ggplot(aes(x=n, y = reorder(journal,n))) + #reorder to descending frequency
     geom_bar(stat="identity", fill = "steelblue", color = "white") +
     labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
     theme(axis.text.y = element_text(size=5))
 
-# 4. MetaGear screening ---------------------------------------------------
-# create the review excel sheet and initialize format for abstract screening
-
+##### 4. MetaGear screening ---------------------------------------------------
+### Create the review excel sheet and initialize format for abstract screening
 # bib_unscreened <- effort_distribute(dat, reviewers="Drew", initialize = T, save_split = T, directory = "./output/") #only need to rune once, uncomment if needed
-colnames(bib_unscreened)
+# colnames(bib_unscreened)
 
-# Use the built in GUI for metaGear to screen articles
-# NOTE: YOU HAVE TO SAVE BEFORE QUITTING THE GUI OR YOU'LL LOSE PROGRESS
+### 4.1 Use the built in GUI for metaGear to screen articles -----
+# NOTE: YOU HAVE TO SAVE BEFORE QUITTING THE GUI OR YOU'LL LOSE PROGRESS, it will update the effort_*reviewer*.csv file
 abstract_screener(file="./output/effort_Drew.csv",
                   aReviewer = "Drew",
                   unscreenedColumnName = "INCLUDE",
                   unscreenedValue = "not vetted",
                   abstractColumnName = "abstract",
                   titleColumnName = "title",
-                  highlightKeywords = c("urban","city","connectivity","permeability","network","isolation",
-                                        "species richness", "diversity","corridor","species"),
+                  browserSearch = "https://scholar.google.ca/scholar?hl=en&as_sdt=0%252C5&q=",
+                  fontSize = 14,
+                  windowWidth = 85,
+                  windowHeight = 20,
+                  highlightKeywords = c("urban","city","connectivity","permeability","network","isolat",
+                                        "species richness", "diversity","corridor","species", "least cost"),
                   highlightColor = "palegoldenrod",
                   theButtons = c("YES","MAYBE","NOTurban","NOTconn","REVIEW"),
                   keyBindingToButtons = c("q","w","e","r","t")) 
+
+### 4.2 Screening effort summary and visulization-----
+bibscreened<-effort_merge(directory="./output")
+unique(bibscreened$INCLUDE) #how many categories are there?
+
+# generate a summary table by each decision category
+bibscreened %>% 
+  group_by(INCLUDE) %>% #group by category
+  summarize(count=n()) %>% #summarize based on count of each category
+  mutate(percentage = count/nrow(bibscreened)*100, #estimate the percentage in each category
+         summary = case_when(INCLUDE == "NOTconn" ~ "Excluded based title, not landscape connectivity",
+                             INCLUDE == "NOTurban" ~ "Excluded based on abstract, not urban/city",
+                             INCLUDE == "MAYBE" ~ "Unclear eligibility, needs full text screening",
+                             INCLUDE == "YES" ~ "candidate studies identified",
+                             INCLUDE == "REVIEW" ~ "Review/Methodology/Framework articles",
+                             TRUE ~ "IN PROGRESS, not vetted yet")) %>% 
+  arrange(desc(percentage)) #arrange in descending % order
+  
+
+# visualize what journals these groups are in published in
+bibscreened %>% 
+  filter(INCLUDE=="YES") %>% 
+  group_by(journal) %>% 
+  count(journal) %>% 
+  ggplot(aes(x=n, y = reorder(journal,n))) + #reorder to descending frequency
+  geom_bar(stat="identity", fill = "steelblue", color = "white") +
+  labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
+  theme(axis.text.y = element_text(size=5))  
+# There appears to be some case-sensitivity issues in the journal names, likely because they came from a variety of sources
+
+# visualize on journal that ISN'T CASE-SENSITIVE
+# bibscreened %>%
+#   filter(INCLUDE == "YES") %>% 
+#   mutate(journal_lower = str_to_lower(journal)) %>%
+#   group_by(journal_lower) %>%
+#   summarise(count = n()) %>%
+#   ungroup() %>%
+#   arrange(desc(count)) %>%
+#   ggplot(aes(x = count, y = reorder(journal_lower, count))) +
+#   geom_bar(stat = "identity", fill = "steelblue", color = "white") +
+#   labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal (case-insensitive)") +
+#   theme(axis.text.y = element_text(size = 10))
+
+### 4.2.1 Clean journal title entries so all capitalized vs non-capital entries are pooled together
+bibs <- bibscreened %>% 
+  mutate(journal = str_replace_all(journal, "&", "and")) %>% 
+  mutate(jour_s = str_to_lower(journal)) %>%
+  mutate(jour_s = str_to_title(jour_s)) %>% #coerce to title-case
+  mutate(jour_s = str_replace_all(jour_s, "\\b(And|In|Of|The|For)\\b", str_to_lower)) #capitalized conjuctions to lowercase
+## How many journals were consolidated during string cleaning? (before - after)
+n_distinct(unique(bibscreened$journal)) - n_distinct(unique(bibs$jour_s)) 
+
+## For articles coded as 'YES' (for full text screening), what journals are they in?
+bibs %>% 
+  filter(INCLUDE=="YES") %>% 
+  group_by(jour_s) %>% 
+  count(jour_s) %>% 
+  ggplot(aes(x=n, y = reorder(jour_s,n))) + #reorder to descending frequency
+  geom_bar(stat="identity", fill = "steelblue", color = "white") +
+  labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
+  theme_bw()+ #to standardize to a common theme
+  theme(axis.text.y = element_text(size = 5)) + #specific modifications to the theme
+  scale_y_discrete(labels = function(x) str_trunc(x, 50)) + #truncate the entries with long names
+  scale_x_continuous(breaks = seq(0, 35, by = 5), expand=expand_scale(mult=c(0,0.1))) #
+
+## How many entries are there for the categories
+### For entries in the YES category, #What is the maximum number of articles from 1 journal?
+bibs %>% filter(INCLUDE=="YES") %>% 
+    group_by(jour_s) %>% count(jour_s) %>% 
+    arrange(desc(n)) 
+### How many journals have more than 5 entries (across all decision groups)
+bibs %>% filter(INCLUDE!="not vetted") %>% 
+    group_by(jour_s) %>% count(jour_s) %>% 
+    #arrange(desc(n)) %>% #this will arrange the table in descending order if you don't run the line below; uncomment if needed
+    filter(n >= 5) %>% n_distinct() 
+
+## Plot all the INCLUDE categories
+### pull the list of journals with >5 entries
+jlist<-bibs %>% filter(INCLUDE!="not vetted") %>% 
+  group_by(jour_s) %>% count(jour_s) %>% 
+  #arrange(desc(n)) %>% #this will arrange the table in descending order if you don't run the line below; uncomment if needed
+  filter(n >= 5) %>% pull(jour_s)
+
+bibs %>% 
+  filter(INCLUDE!="not vetted") %>%
+  filter(jour_s %in% jlist) %>% #un/comment this line to get ALL the journals, very cluttered with all. 
+  group_by(jour_s, INCLUDE) %>%
+  summarise(count = n()) %>%
+  ungroup() %>% 
+  ggplot(aes(x= count, y = reorder(jour_s,count), fill = INCLUDE)) + #reorder to descending frequency
+    geom_bar(stat="identity", position = "stack", colour="black") +
+    labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
+    theme_bw()+ #to standardize to a common theme
+    theme(axis.text.y = element_text(size = 5)) + #specific modifications to the theme
+    scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
+    scale_x_continuous(limits = c(0, 120), breaks = seq(0, 120, 5), expand=expand_scale(mult=c(0,0.1))) 
+
+# 5. PRISMA screening results ---------------------------------------------
+csvFile <- system.file("extdata", "PRISMA.csv", package = "PRISMA2020")
+data <- read.csv(csvFile);
+data <- PRISMA_data(data);
+plot <- PRISMA_flowdiagram(data,
+                           fontsize = 12,
+                           interactive = TRUE,
+                           previous = FALSE,
+                           other = TRUE);
+plot
+
