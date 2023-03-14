@@ -1,35 +1,104 @@
 ---
-title: "Landscape connectivity and the urban ecosystem: A meta-analysis"
+title: "Search results bibliography screening: Title and abstract"
 author: "Andrew Habrich"
 date: '`r Sys.Date()`'
-output: html_notebook
+output: 
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: yes
+      smooth_scroll: yes
+    fig_caption: yes
+    code_folding: hide
+    code_download: yes
 ---
 
-##### 1. Load relevant packages into library -------------------------------------
-## install.packages("tidyverse","metagear","PRISMA2020","rcrossref) install packages as needed
-library(plyr) #plyr needs to be loaded BEFORE tidyverse to prevent issues with dplyr
-library(tidyverse)
-library(synthesisr)
-library(PRISMA2020)
-library(metagear)
-library(lubridate) #this should be in the tidyverse, if for some reason it isn't you can install it seperately
-library(rcrossref)
+```{css zoom-clickfig-src, echo = FALSE}
+script src = "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"
+```
 
-###### 2. Read in the bibliographic data set ------------------------------------
-# rm(list=ls()) #remove everything in the R environment, use as needed.
+```{js zoom-clickfig-jquery, echo = FALSE}
+ $(document).ready(function() {
+    $('body').prepend('<div class=\"zoomDiv\"><img src=\"\" class=\"zoomImg\"></div>');
+    // onClick function for all plots (img's)
+    $('img:not(.zoomImg)').click(function() {
+      $('.zoomImg').attr('src', $(this).attr('src')).css({width: '100%'});
+      $('.zoomDiv').css({opacity: '1', width: 'auto', border: '1px solid white', borderRadius: '5px', position: 'fixed', top: '50%', left: '50%', marginRight: '-50%', transform: 'translate(-50%, -50%)', boxShadow: '0px 0px 50px #888888', zIndex: '50', overflow: 'auto', maxHeight: '100%'});
+    });
+    // onClick function for zoomImg
+    $('img.zoomImg').click(function() {
+      $('.zoomDiv').css({opacity: '0', width: '0%'}); 
+    });
+  });
+```
+
+```{r Scrollable text output, include=FALSE}
+options(width = 60)
+local({
+  hook_output <- knitr::knit_hooks$get('output')
+  knitr::knit_hooks$set(output = function(x, options) {
+    if (!is.null(options$max.height)) options$attr.output <- c(
+      options$attr.output,
+      sprintf('style="max-height: %s;"', options$max.height)
+    )
+    hook_output(x, options)
+  })
+})
+```
+
+```{r colour text option, include=FALSE}
+colorize <- function(x, color) {
+  if (knitr::is_latex_output()) {
+    sprintf("\\textcolor{%s}{%s}", color, x)
+  } else if (knitr::is_html_output()) {
+    sprintf("<span style='color: %s;'>%s</span>", color,
+      x)
+  } else x
+}
+```
+
+Click figures to zoom in. The document works best on Chrome or Firefox. You can also download the .RMD file by clicking on the button at the top-right corner of the web page.\
+Document made with R version `r getRversion()`
+  
+### 1. Required R packages
+
+```{r Load relevant packages into library, echo=TRUE, message=FALSE, warning=FALSE, results='hide'}
+## install.packages("tidyverse","metagear","rcrossref) install packages as needed
+library(plyr) #plyr needs to be loaded BEFORE tidyverse to prevent issues with dplyr
+library(tidyverse) #load tidyverse
+library(synthesisr) #import bibliographic data - part of metaverse
+library(lubridate) #this should be in the tidyverse, if for some reason it isn't you can install it seperately
+library(metagear) #abstract/title screening package
+library(rcrossref) #interface with 'crossref' api
+```
+
+### 2. Read in the deduplicated bibliographic data set
+
+```{r read data}
 initial_dat <-
   read_refs(filename = "./output/deduplicated_bib_02-1.ris", return_df = T)
+```
 
-# let's check the structure and clean the data so that we can systematically screen
-str(initial_dat) #all columns are 'character'
-ncol(initial_dat) #16 columns of data
+Let's check the structure and clean the data so that we can systematically screen
 
-### 2.1. Data cleaning and exploration --------------------------------------
-#How many of the columns are *mostly* empty
+There are **`r ncol(initial_dat)`** columns. As you can see from the table below, they are all coded as 'character', even the year.
+
+```{r column classes, echo=FALSE, max.height='200px'}
+initial_dat %>% imap_dfr(~ tibble(colname = .y, classes = class(.x) %>% str_c(collapse = ", ")))
+```
+
+#### 2.1. Data cleaning and exploration
+
+How many NAs are there in the dataframe columns?
+
+```{r dataframe NAs by col, echo=FALSE, max.height='200px'}
 initial_dat %>% 
-  summarise(
-    across(everything(), ~ sum(is.na(.))) %>% as_tibble()
-  )
+  summarise(across(everything(), ~ sum(is.na(.))) %>% 
+      as_tibble()) %>% 
+      pivot_longer(everything(), names_to="Column", values_to = "# of NAs")
+```
+
+```{r preliminary cleaning, include=FALSE}
 # remove the unnecessary columns...
 initial_dat <- initial_dat %>% select(-c(keywords,notes))
 
@@ -39,16 +108,12 @@ initial_dat %>% filter(is.na(author)) %>% as_tibble()
 initial_dat %>% filter(is.na(year)) %>% as_tibble()
 
 initial_dat <- initial_dat %>% mutate(year=as.numeric(year)) %>% as_tibble() #change year to be numeric instead of character
-
-## Save a seperate dataframe to work with ##
 dat<-initial_dat 
+```
 
-# How many empty columns are there?
-dat %>% 
-  summarise(
-    across(everything(), ~ sum(is.na(.))) %>% as_tibble()
-  )
+A number of other data cleaning steps are done too; The descriptive steps taken are in script 03-screening_metagear available on [my GitHub page by clicking here](https://github.com/drewhabrich/MetaUrbanConn).
 
+```{r filling in missing data using crossref, message=FALSE, warning=FALSE, include=FALSE, results='hide'}
 ### Is there a pattern to which entries are missing DOI? Or URLS?
 ## 2.1.1 DOI MISSING
 dat %>% filter(is.na(doi)) %>% ggplot(aes(x = year)) +
@@ -103,42 +168,74 @@ dat %>%
     across(everything(), ~ sum(is.na(.))) %>% as_tibble()
   )
 
-##### 3 Bibliography data exploration -----------------------------------------
-## check the data structure
-head(dat)
-str(dat)
-dat %>% summarise(across(everything(), ~ sum(is.na(.)))) #Columns with # of NAs 
+```
 
-# how many publications by year are there?
+### 3. Bibliography data exploration
+
+Let's take a peek at the first couple of rows:
+
+```{r data structure & exploration}
+#Check the data structure
+head(dat)
+```
+
+#### Let's think about some data exploration questions to get familiar with the data
+  
+##### 3.1 How many publications per year are there on this topic?
+
+```{r pub x year fig, echo=FALSE, message=FALSE, warning=FALSE}
 dat %>% ggplot(aes(x = year)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
-  labs(x = "Year", y = "Publication count", title = "'Urban landscape connectivity' search results by year") + xlim(1990,2024)
+  labs(x = "Year", y = "Publication count", title = "'Urban landscape connectivity' search results by year") + 
+  scale_x_continuous(limits=c(1980,2024), breaks=seq(1980,2024,4))+
+  theme_bw()
+```
 
-# how many authors are there?
-n_distinct(dat$author) #this is only a DIRECT match.
+##### 3.2 How many authors/articles are there?
+
+```{r author/article, echo=FALSE, message=FALSE, warning=FALSE}
+#n_distinct(dat$author) #this is only a DIRECT match.
 # Count the number of authors in each row, handling both ";" and "and" as separators; NOTE: this uses regular expression to find text strings
 dat$num_authors <- sapply(strsplit(dat$author, ";\\s*|\\s+and\\s+"), length)
 # what is the range of # of authors
 dat %>% ggplot(aes(x = num_authors)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
-  labs(x = "# of authors on publication", y = "Frequency") + xlim(1,30)
+  labs(x = "# of authors on publication", y = "Frequency") + scale_x_continuous(limits=c(1,30), breaks=seq(1,30,2))+
+  theme_bw()
+```
 
+\
+**Zero single authored papers!**
+
+```{r eval=FALSE, include=FALSE}
 dat %>% summarise(mean_numauth=mean(num_authors),
                   med_numauth=median(num_authors),
                   min_numauth=min(num_authors),
                   max_numauth=max(num_authors)) #the entry with the max # of authors is a dataset publication with 199 people!
+```
 
-# how many journals are entries published in (NOTE: some entries do not have a journal; i.e. preprint, thesis, or non-peer reviewed articles)
-n_distinct(dat$journal) #distinct journal entries (SOME MAY BE DUPLICATEDDD, this only matches on EXACT)
+##### 3.3 How many different journals are the entries published in? (NOTE: Some entries do not have a journal; i.e. preprint, thesis, or non-peer reviewed articles)
+
+```{r entries by journal, echo=FALSE, message=FALSE, warning=FALSE}
+#n_distinct(dat$journal) #distinct journal entries (SOME MAY BE DUPLICATEDDD, this only matches on EXACT)
 dat %>% 
   group_by(journal) %>% 
   count(journal) %>% 
+  filter(n >= 5) %>% 
+  filter(!is.na(journal)) %>% 
   ggplot(aes(x=n, y = reorder(journal,n))) + #reorder to descending frequency
     geom_bar(stat="identity", fill = "steelblue", color = "white") +
-    labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
-    theme(axis.text.y = element_text(size=5))
+    labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal (NAs omitted)") +
+    scale_y_discrete(labels = function(x) str_trunc(x, 50)) +
+    theme(axis.text.y = element_text(size=4)) +
+    theme_bw()
+```
 
-##### 4. MetaGear screening ---------------------------------------------------
+Note how some journals appear multiple times (in all upper-case or title-case). Have to fix this for later plots.
+
+### 4. Title and abstract screening using the MetaGear package v.`r packageVersion("metagear")`
+
+```{r screening GUI, eval=FALSE, include=FALSE}
 ### Create the review excel sheet and initialize format for abstract screening
 # bib_unscreened <- effort_distribute(dat, reviewers="Drew", initialize = T, save_split = T, directory = "./output/") #only need to rune once, uncomment if needed
 # colnames(bib_unscreened)
@@ -160,25 +257,34 @@ abstract_screener(file="./output/effort_Drew.csv",
                   highlightColor = "palegoldenrod",
                   theButtons = c("YES","MAYBE","NOTurban","NOTconn","REVIEW"),
                   keyBindingToButtons = c("q","w","e","r","t")) 
+```
 
-### 4.2 Screening effort summary and visulization-----
+#### 4.1 Screening effort summary
+
+```{r screened results vis, message=FALSE, warning=FALSE, echo=FALSE}
 bibscreened<-effort_merge(directory="./output")
-unique(bibscreened$INCLUDE) #how many categories are there?
+#unique(bibscreened$INCLUDE) #how many categories are there?
 
 # generate a summary table by each decision category
-bibscreened %>% 
+screen_sum<-bibscreened %>% 
   group_by(INCLUDE) %>% #group by category
   summarize(count=n()) %>% #summarize based on count of each category
-  mutate(percentage = count/nrow(bibscreened)*100, #estimate the percentage in each category
-         summary = case_when(INCLUDE == "NOTconn" ~ "Excluded based title, not landscape connectivity",
-                             INCLUDE == "NOTurban" ~ "Excluded based on abstract, not urban/city",
+  mutate(percentage = signif(count/nrow(bibscreened)*100, digits=2), #estimate the percentage in each category
+         summary = case_when(INCLUDE == "NOTconn" ~ "Excluded based title, no indication of 'urban' or 'landscape connectivity'",
+                             INCLUDE == "NOTurban" ~ "Excluded based on abstract, not urban or no measure of connectivity",
                              INCLUDE == "MAYBE" ~ "Unclear eligibility, needs full text screening",
-                             INCLUDE == "YES" ~ "candidate studies identified",
+                             INCLUDE == "YES" ~ "Potential candidate studies identified",
                              INCLUDE == "REVIEW" ~ "Review/Methodology/Framework articles",
                              TRUE ~ "IN PROGRESS, not vetted yet")) %>% 
+  mutate(INCLUDE=if_else(INCLUDE=="NOTconn","TitleExcl", if_else(INCLUDE=="NOTurban","AbstrExcl", INCLUDE))) %>% 
   arrange(desc(percentage)) #arrange in descending % order
   
+kableExtra::kable(screen_sum, caption = "Summary of screening, grouped by decision category",
+      col.names=c("Decision","n","% total","Description")) %>%  
+  kableExtra::kable_styling(bootstrap_options = "striped", full_width = F)
+```
 
+```{r Jname for YES, include=FALSE}
 # visualize what journals these groups are in published in
 bibscreened %>% 
   filter(INCLUDE=="YES") %>% 
@@ -186,8 +292,9 @@ bibscreened %>%
   count(journal) %>% 
   ggplot(aes(x=n, y = reorder(journal,n))) + #reorder to descending frequency
   geom_bar(stat="identity", fill = "steelblue", color = "white") +
-  labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
-  theme(axis.text.y = element_text(size=5))  
+  labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal for potential candidate studies") +
+  scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
+  theme(axis.text.y = element_text(size=4))  
 # There appears to be some case-sensitivity issues in the journal names, likely because they came from a variety of sources
 
 # visualize on journal that ISN'T CASE-SENSITIVE
@@ -202,8 +309,9 @@ bibscreened %>%
 #   geom_bar(stat = "identity", fill = "steelblue", color = "white") +
 #   labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal (case-insensitive)") +
 #   theme(axis.text.y = element_text(size = 10))
+```
 
-### 4.2.1 Clean journal title entries so all capitalized vs non-capital entries are pooled together
+```{r Clean journal title, include=FALSE}
 bibs <- bibscreened %>% 
   mutate(journal = str_replace_all(journal, "&", "and")) %>% 
   mutate(jour_s = str_to_lower(journal)) %>%
@@ -211,20 +319,25 @@ bibs <- bibscreened %>%
   mutate(jour_s = str_replace_all(jour_s, "\\b(And|In|Of|The|For)\\b", str_to_lower)) #capitalized conjuctions to lowercase
 ## How many journals were consolidated during string cleaning? (before - after)
 n_distinct(unique(bibscreened$journal)) - n_distinct(unique(bibs$jour_s)) 
+```
 
-## For articles coded as 'YES' (for full text screening), what journals are they in?
+#### 4.2 For articles coded as 'YES' (for full text screening), what journals are they in?
+
+```{r yes-articles, echo=FALSE}
 bibs %>% 
   filter(INCLUDE=="YES") %>% 
   group_by(jour_s) %>% 
   count(jour_s) %>% 
   ggplot(aes(x=n, y = reorder(jour_s,n))) + #reorder to descending frequency
-  geom_bar(stat="identity", fill = "steelblue", color = "white") +
+  geom_bar(stat="identity", fill = "steelblue", color = "black") +
   labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
   theme_bw()+ #to standardize to a common theme
-  theme(axis.text.y = element_text(size = 5)) + #specific modifications to the theme
-  scale_y_discrete(labels = function(x) str_trunc(x, 50)) + #truncate the entries with long names
-  scale_x_continuous(breaks = seq(0, 35, by = 5), expand=expand_scale(mult=c(0,0.1))) #
+  theme(axis.text.y = element_text(size = 4)) + #specific modifications to the theme
+  scale_y_discrete(labels = function(x) str_trunc(x, 35)) + #truncate the entries with long names
+  coord_cartesian(xlim=c(0, 55), expand=T)
+```
 
+```{r run-dontshow, message=FALSE, warning=FALSE, include=FALSE}
 ## How many entries are there for the categories
 ### For entries in the YES category, #What is the maximum number of articles from 1 journal?
 bibs %>% filter(INCLUDE=="YES") %>% 
@@ -242,29 +355,32 @@ jlist<-bibs %>% filter(INCLUDE!="not vetted") %>%
   group_by(jour_s) %>% count(jour_s) %>% 
   #arrange(desc(n)) %>% #this will arrange the table in descending order if you don't run the line below; uncomment if needed
   filter(n >= 5) %>% pull(jour_s)
+```
 
+#### 4.3 For journals with >5 entries, what is the breakdown by each decision group?
+```{r decision by jour_s, echo=FALSE, message=FALSE, warning=FALSE}
 bibs %>% 
   filter(INCLUDE!="not vetted") %>%
   filter(jour_s %in% jlist) %>% #un/comment this line to get ALL the journals, very cluttered with all. 
   group_by(jour_s, INCLUDE) %>%
   summarise(count = n()) %>%
   ungroup() %>% 
+  mutate(INCLUDE=if_else(INCLUDE=="NOTconn","TitleExcl", if_else(INCLUDE=="NOTurban","AbstrExcl", INCLUDE))) %>% 
   ggplot(aes(x= count, y = reorder(jour_s,count), fill = INCLUDE)) + #reorder to descending frequency
     geom_bar(stat="identity", position = "stack", colour="black") +
-    labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
+    labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal (with n >= 5)") +
     theme_bw()+ #to standardize to a common theme
-    theme(axis.text.y = element_text(size = 5)) + #specific modifications to the theme
+    theme(axis.text.y = element_text(size = 4)) + #specific modifications to the theme
     scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
-    scale_x_continuous(limits = c(0, 120), breaks = seq(0, 120, 5), expand=expand_scale(mult=c(0,0.1))) 
+    coord_cartesian(xlim=c(0, 120), expand=T)
+```
 
-# 5. PRISMA screening results ---------------------------------------------
-csvFile <- system.file("extdata", "PRISMA.csv", package = "PRISMA2020")
-data <- read.csv(csvFile);
-data <- PRISMA_data(data);
-plot <- PRISMA_flowdiagram(data,
-                           fontsize = 12,
-                           interactive = TRUE,
-                           previous = FALSE,
-                           other = TRUE);
-plot
-
+### 5. Next steps
+Several issues still need to be resolved before moving on to data extraction:  
+- Full-text reading for all the 'MAYBE's  
+- Full-text download for all the potential candidate studies  
+- Chase citations from key reviews in the 'REVIEW' group  
+  
+For data extraction:  
+- Put together team of people to help flag and extract data  
+- Create extraction sheet and instructions/meta-data for extractions  
