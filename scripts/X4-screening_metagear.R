@@ -1,4 +1,4 @@
-##### 1. Load relevant packages into library -------------------------------------
+# 1. Load relevant packages into library -------------------------------------
 ## install.packages("tidyverse","metagear","PRISMA2020","rcrossref) install packages as needed
 library(plyr) #plyr needs to be loaded BEFORE tidyverse to prevent issues with dplyr
 library(tidyverse) #v1.3.2
@@ -7,16 +7,15 @@ library(metagear) #v0.7.0
 library(lubridate) #v1.9.2 this should be in the tidyverse
 library(rcrossref) #v1.2.0
 
-###### 2. Read in the bibliographic data set ------------------------------------
+# 2. Read in the bibliographic data set ------------------------------------
 # rm(list=ls()) #remove everything in the R environment, use as needed.
-initial_dat <-
-  read_refs(filename = "./output/deduplicated_bib_02-1.ris", return_df = T)
+initial_dat <- read_refs(filename = "./output/deduplicated_bib_02.ris", return_df = T)
 
 # let's check the structure and clean the data so that we can systematically screen
 str(initial_dat) #all columns are 'character'
 ncol(initial_dat) #16 columns of data
 
-### 2.1. Data cleaning and exploration --------------------------------------
+## 2.1. Data cleaning and exploration --------------------------------------
 #How many of the columns are *mostly* empty
 initial_dat %>% 
   summarise(
@@ -249,7 +248,7 @@ bibs %>%
     scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
     scale_x_continuous(limits = c(0, 120), breaks = seq(0, 120, 5), expand=expand_scale(mult=c(0,0.1))) 
 
-# 5. PRISMA screening results ---------------------------------------------
+# 5. PRISMA screening results WIP ---------------------------------------------
 csvFile <- system.file("extdata", "PRISMA.csv", package = "PRISMA2020")
 data <- read.csv(csvFile);
 data <- PRISMA_data(data);
