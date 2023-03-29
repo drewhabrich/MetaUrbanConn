@@ -8,7 +8,7 @@ library(synthesisr) #v0.3.0
 # 2. Import search results and deduplicate --------------------------------
 bibfiles<-list.files("./raw_data/bibfix_results/", full.names=T) #create a list of all the files in the data directory
 bibfiles #should be 6 files
-import<-read_refs(filename=bibfiles, return_df=T) %>% filter(!is.na(title)) #import as a dataframe, so we can manipulate columns
+import<-read_refs(filename=bibfiles) %>% filter(!is.na(title)) #import as a dataframe, so we can manipulate columns
 
 scop <- read_ref("./raw_data/bibfix_results/REPAIRED-scopus.ris")
 wos <- read_refs(filename= c("./raw_data/bibfix_results/REPAIRED-wos1.ris", "./raw_data/bibfix_results/REPAIRED-wos2.ris"))
@@ -31,39 +31,52 @@ sum(is.na(import$title)) #are any rows missing their titles?
 import %>% summarise(across(everything(), ~ sum(is.na(.)))) %>% tibble 
 # many have few entries
 
-## Deduplicate based on 'exact' title match (this is the same as n_distinct)
-data <- deduplicate(
-  import,
-  match_by = "title",
-  method = "exact" #EXACT MATCHES ONLY, no need to review these.
-)
-nrow(import)-nrow(data) #How many results were removed this way: 957
+## 2.1 Deduplicate based on exacty titles
+n_distinct(import$title)
+titldupe <- deduplicate(import, match_by = "title", method = "exact") #EXACT MATCHES ONLY, no need to review these.
 
-## Deduplicate based on text string distance
+nrow(import)-nrow(titldupe) #How many results were removed this way: 957
+
+## 2.2 Deduplicate based on exact matching doi
+n_distinct(titldupe$doi) #how many distinct DOIs are there? 
+doidupe <- deduplicate(titldupe, match_by = "doi", method = "exact")
+
+## 2.3 Deduplicate based on text string distance
 duplicates_string <- find_duplicates(
-  data$title,
+  doidupe$title,
   method = "string_osa",
   to_lower = TRUE, #forces all text to lowercase for comparison
   rm_punctuation = TRUE, #removes all punctuation before comparison (useful for papers with subtitles)
-  threshold = 5 #the cutoff threshold to decide if the strings are duplicates
+  threshold = 15 #the cutoff threshold to decide if the strings are duplicates
 )
+
 # we can extract the line numbers from the dataset that are likely duplicated
 # this lets us manually review those titles to confirm they are duplicates
-manual_check <- review_duplicates(data$title, duplicates_string)
-print(manual_check)
-View(as_tibble(manual_check)) #manually review if the duplicates are real
+manual_check <- review_duplicates(doidupe$title, duplicates_string)
+view(manual_check) #manually check to see if the 'matches' are actually the same
 
-# final cleaning
-final_dup <- synthesisr::override_duplicates(duplicates_string, 14) #match 14 is actually 2 separate papers, with similar titles
-final_res <- extract_unique_references(data, final_dup) #find the unique entries from the culled dataframe, using the list of duplicates
-
-final_res <- final_res %>% filter(!is.na(title)) #remove any rows that had NA in titles, this is an artifact of deduplication.
+# Final cleaning
+## Override the entries flagged as duplicate but actually aren't (from manual screening)
+final_dup <- synthesisr::override_duplicates(duplicates_string, c(14,228,510,1458,1507,1517,1663)) 
+final_res <- extract_unique_references(doidupe, final_dup, type="merge") #find the unique entries from the culled dataframe, using the list of duplicates
 
 # 3. Writing the deduplicated bibliography to file ------------------------
 #save the final results list into .ris format
-final_res
-
 write_refs(final_res,
            format = "ris", #or "bib"
            file = "./data/deduplicated_bib-02"
 )
+
+# Download the PRISMA template csv and populate the relevant cells (duplicates, n-source specific)
+glimpse(prismainfo)
+prismainfo <-read.csv(system.file("extdata", "PRISMA.csv", package = "PRISMA2020"))
+prismainfo[13,"n"] <- nrow(import)-nrow(final_res) #number of duplicates
+prismainfo[6, "n"] <- str_c("Web of Science, ", nrow(wos), #find the number of entries per source
+                            "; SCOPUS, ", nrow(scop), 
+                            "; ProQuest, ", nrow(proq),
+                            "; bioRxiv, ", nrow(biox),
+                            "; ConservationCorridor, ", nrow(ccorg))
+
+# Write the template to csv to populate later when we generate the PRISMA diagram.
+write.csv(prismainfo, file = "./data/PRISMA_template-02.csv")
+

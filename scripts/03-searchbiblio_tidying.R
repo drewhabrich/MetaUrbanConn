@@ -5,7 +5,7 @@ library(synthesisr) #v0.3.0
 
 # 2. Read in the bibliographic data set ------------------------------------
 # rm(list=ls()) #remove everything in the R environment, use as needed.
-initial_dat <- read_refs(filename = "./data/deduplicated_bib_02.ris", return_df = T)
+initial_dat <- read_refs(filename = "./data/deduplicated_bib-02.ris", return_df = T)
 
 ## Let's check the structure and clean the data so that we can systematically screen
 glimpse(initial_dat) #16 columns, all 'character' format
@@ -71,7 +71,8 @@ dat %>% filter(is.na(doi)) %>% group_by(jour_s) %>% count(jour_s) %>%
   theme(axis.text.y = element_text(size = 5)) + 
   scale_y_discrete(labels = function(x) str_trunc(x, 50))
 
-dat %>% filter(is.na(doi)) %>% view
+# dat %>% filter(is.na(doi)) %>% view
+
 ### 2.2.2 URL MISSING
 # what years?
 dat %>% filter(is.na(url)) %>% ggplot(aes(x = year)) +

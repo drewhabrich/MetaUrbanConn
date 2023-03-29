@@ -2,7 +2,7 @@
 #library(remotes) #install.packages('remotes') #lets you download R packages outside of CRAN. Use as needed
 #remotes::install_github("rmetaverse/metaverse") #this installs a whole set of meta-analysis related R packages, https://rmetaverse.github.io/
 #Relevant packages; litsearchr, revtools, synthesisr, metaDigitise, robvis. Load as needed.
-library(tidyverse) #v1.3.2
+library(tidyverse) #v2.0.0
 library(litsearchr) #v1.0.0
 library(igraph) #v1.3.5
 library(ggraph) #v2.1.0
@@ -10,7 +10,7 @@ library(ggraph) #v2.1.0
 # 1. Importing results from initial search string ----------------------------
 initial_results<-import_results(directory="raw_data/naive_search") #Downloads all files in folder if no specific file is referenced
 #check the data structure/format
-str(initial_results)
+glimpse(initial_results)
 colnames(initial_results)
 
 # Generating potential search terms
@@ -21,7 +21,7 @@ ecologystopwords <- read_lines("./raw_data/ecologystopwords.txt")
 stopwords <- c(englishstopwords,sciencestopwords,ecologystopwords) 
 
 ### From keywords
-naive_results$keywords %>% is.na() %>% sum() #351 results missing keywords
+initial_results$keywords %>% is.na() %>% sum() #351 results missing keywords
 keywords<-extract_terms(keywords = clean_keywords(initial_results$keywords), 
               method = "tagged", #keywords used by authors in the article
               min_freq = 25, #minimum # of times it needs to be used

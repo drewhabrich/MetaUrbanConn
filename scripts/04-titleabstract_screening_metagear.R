@@ -6,7 +6,7 @@ library(metagear) #v0.7.0
 
 # 2. Read in the bibliographic data set ------------------------------------
 # rm(list=ls()) #remove everything in the R environment, use as needed.
-initial_dat <- read_csv("./output/clean_bibliography-03.csv", col_names = T)
+initial_dat <- read_csv("./data/clean_bibliography-03.csv", col_names = T)
 # quickly verify that everything is in order:
 glimpse(initial_dat)
 # check for missing data
@@ -15,6 +15,7 @@ initial_dat %>%
             )
 # 3. MetaGear screening ---------------------------------------------------
 ### Create the review excel sheet and initialize format for abstract screening
+
 # bib_unscreened <- effort_distribute(initial_dat, reviewers="drew", initialize = T, save_split = T, directory = "./output/") #only need to run once, uncomment if needed
 # colnames(bib_unscreened)
 
@@ -99,11 +100,29 @@ bibscreened %>%
   scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
   scale_x_continuous(limits = c(0, 120), breaks = seq(0, 120, 5), expand=expand_scale(mult=c(0,0.1))) 
 
-# 5. PRISMA screening results --------------
+# 5. PRISMA screening results - THIS CAN BE MODIFIED--------------
 library(PRISMA2020) #v1.1.1
-prisdat <- read.csv("./raw_data/PRISMA_screenres.csv") #has to be manually edit, or modified from template
-# pristemp <- read.csv("./raw_data/PRISMA_template.csv") #uncomment to read in the template, edit boxtext column to change text
-prisma <- PRISMA_data(prisdat) #coerced to list, you can also modify this list to generate the flowdiagram. 
+# Read in the template from the package directory; edit boxtext column to change text
+pristemp <- read.csv("./data/PRISMA_template-02.csv") 
+prisma <- PRISMA_data(pristemp) #coerced to list, you can also modify this list to generate the flowdiagram. 
+
+# Populate the PRISMA list from dataframe information!
+prisma$newstud_text <- "Identification of potential candidate studies for meta-analysis"
+prisma$records_screened <- nrow(bibscreened) 
+prisma$records_excluded <- nrow(bibscreened %>% filter(INCLUDE == "NOtitle"))
+prisma$records_excluded_text <- "Records excluded: \n- Not terrestrial-based\n- Not in urban ecosystem\n- No indication of config/connectivity metric"
+  
+prisma$dbr_sought_reports <- nrow(bibscreened) - nrow(bibscreened %>% filter(INCLUDE == "NOtitle"))
+prisma$dbr_notretrieved_reports <- nrow(bibscreened %>% filter(INCLUDE == "NOabstr"))
+prisma$dbr_notretrieved_reports_text <- "Records excluded: \nNot in an urban area or no indication of \nconfiguration or connectivity metric used."
+  
+prisma$dbr_assessed <- nrow(bibscreened) - nrow(bibscreened %>% filter(INCLUDE == "NOtitle")) - nrow(bibscreened %>% filter(INCLUDE == "NOabstr"))
+prisma$dbr_excluded <- bibscreened %>% group_by(INCLUDE) %>% filter(INCLUDE %in% c("YES", "MAYBE", "REVIEW")) %>% count() %>% as.data.frame() %>% rename("reason"=1) 
+prisma$new_studies <- bibscreened %>% filter(INCLUDE %in% c("YES","MAYBE")) %>% nrow() 
+prisma$new_reports <- bibscreened %>% filter(INCLUDE %in% c("REVIEW")) %>% nrow() 
+prisma$included_text <- "Screen full-text"
+
+# create and save the PRISMA plot
 prismaplot <- PRISMA_flowdiagram(prisma,
                            fontsize = 12,
                            interactive = F,
@@ -115,3 +134,13 @@ PRISMA_save(prismaplot,
             filename = "./output/PRISMA_summary-04.pdf",
             filetype = NA,
             overwrite = T)
+
+#####TEST ZONE#####
+#compare initial dat and bibscreened
+bibscreened %>% select(!c(INCLUDE,REVIEWERS,STUDY_ID)) %>% anti_join(initial_dat, by=names(.)) %>% view
+
+x<- anti_join(bibscreened, initial_dat) %>% tibble
+y<-initial_dat %>% anti_join(bibscreened) %>% tibble
+xy<-anti_join(x,y)
+nrow(bibscreened)-nrow(initial_dat)
+bibscreened %>% semi_join(initial_dat, by=names(select(.,4:20))) %>% view
