@@ -16,9 +16,8 @@ colnames(initial_results)
 # Generating potential search terms
 ## First we need to include generic words to exclude from generation of new keywords
 englishstopwords <- get_stopwords("English")
-sciencestopwords <- read_lines("./raw_data/sciencestopwords.txt")
 ecologystopwords <- read_lines("./raw_data/ecologystopwords.txt")
-stopwords <- c(englishstopwords,sciencestopwords,ecologystopwords) 
+stopwords <- c(englishstopwords,ecologystopwords) 
 
 ### From keywords
 initial_results$keywords %>% is.na() %>% sum() #351 results missing keywords
@@ -44,13 +43,12 @@ remove_terms <- c("area","areas","system","systems","model","models","impact","i
 terms<-combinedterms[!(combinedterms %in% c(remove_terms))]
 
 # 2. Network analysis and keyword pruning ------------------------------------
-fulldoc <- paste(naive_results[, "title"], naive_results[, "abstract"]) #bind the title and abstract text
+fulldoc <- paste(initial_results[, "title"], initial_results[, "abstract"]) #bind the title and abstract text
 docfmatrix <- create_dfm(elements=fulldoc, features=terms) #create the document matrix
 graph <- create_network(docfmatrix, min_studies=3, min_occ = 3) #create a network of terms used by the records
 
 #Prune according to keyword strength in network
 strengths <- strength(graph)
-
 data.frame(term=names(strengths), strength=strengths, row.names=NULL) %>%
   mutate(rank=rank(strength, ties.method="min")) %>%
   arrange(desc(strength)) ->
@@ -62,55 +60,28 @@ cutoff_fig <- ggplot(term_strengths, aes(x=rank, y=strength, label=term)) +
   geom_line() +
   geom_point() +
   geom_text(data=filter(term_strengths, rank>5), hjust="right", nudge_y=20, check_overlap=TRUE)
-cutoff_fig
-
 cutoff_cum <- find_cutoff(graph, method="cumulative", percent=0.8) #retaining 80% of the network strength
-cutoff_cum
-
 cutoff_fig +
   geom_hline(yintercept=cutoff_cum, linetype="dashed")
 
-
 get_keywords(reduce_graph(graph, cutoff_cum)) #a list of the 'strongest' keywords
-
-hist(igraph::strength(g), 100, main="Histogram of node strengths", xlab="Node strength")
-
-#Changepoints (multiple keyword cutoffs)
-#cutoff_change <- find_cutoff(g, method="changepoint", knot_num=3)
-#cutoff_change
-#cutoff_fig +
-#  geom_hline(yintercept=cutoff_change, linetype="dashed")
-
-#g_redux <- reduce_graph(g, cutoff_change[1])
-
-#selected_terms <- get_keywords(g_redux)
-#selected_terms
+hist(igraph::strength(graph), 100, main="Histogram of node strengths", xlab="Node strength")
 
 ## Grouping keywords (manually) to write a new 'refined' search string ##NOTE excluding fish/non-terrestrial
-grouped_terms1 <-list(
-  urban=c("urban","urban area*","urban landscape*","city","cities","town*"),
-  biodiversity=c("biodiversity","wildlife","vegetation","plant*","tree*","bird*","avian","arthropod*","insect*","mammal*","herptile*","reptile*", "amphibian*"),
-  connectivity=c("connectivity","landscape connectivity","functional connectivity","structural connectivity","habitat connectivity","ecological connectivity","habitat network*","ecological network*","corridor*","habitat corridor*","ecological corridor*","least-cost","least cost","circuit theory","circuit-theory","landscape resistance*","landscape permeability"),
-  outcomes=c("occup*","occurr*","abundan*", "species richness", "diversity", "speci* response*", "gene* diversity","gene flow", "speci* distribut*", "speci* densit*", "speci* composit*", "speci* assemblage*", "communit* composit*", "communit* assemblage*", "popul* persist*","popul* response*", "distribut* pattern*", "spatial* distribut*","movement*","dispersal"))
-
-grouped_terms1
-
-# grouped_terms2 <-list(
-#   urban=c("urban","urban areas","urban landscapes","city","cities","towns"),
-#   biodiversity=c("biodiversity","wildlife","vegetation","plants","trees","birds","avian","arthropods","insects","mammals","herptiles","reptiles", "amphibians"),
-#   connectivity=c("connectivity", "landscape connectivity","functional connectivity","structural connectivity","habitat connectivity","ecological connectivity","habitat networks","ecological networks","corridors","habitat corridors","ecological corridors","least-cost","least cost","circuit theory","circuit-theory","landscape resistance","landscape permeability"),
-#   outcomes=c("occupancy","occurrence","abundance", "species richness", "diversity", "species responses", "genetic diversity","gene flow", "species distributions", "species density", "species composition", "species assemblages", "community composition", "community assemblages", "population persistence","population responses", "distribution patterns", "spatial distributions","movements","dispersal"))
-# 
-# grouped_terms2
+grouped_terms <-list(
+  urban=c("urban","urban areas","urban landscapes","city","cities","towns"),
+  biodiversity=c("biodiversity","wildlife","vegetation","plants","trees","birds","avian","arthropods","insects","mammals","herptiles","reptiles", "amphibians"),
+  connectivity=c("connectivity","landscape connectivity","functional connectivity","structural connectivity","habitat connectivity","ecological connectivity","habitat networks","ecological networks","corridors","habitat corridors","ecological corridors","least-cost","least cost","circuit theory","circuit-theory","landscape resistance","landscape permeability"),
+  outcomes=c("occupancy","occurrence","abundance", "species richness", "diversity", "species responses", "genetic diversity","gene flow", "species distribution", "species density", "species composition", "species assemblages", "community composition", "community assemblages", "population persistance", "population responses", "distribution patterns", "spatial distribution","movement","dispersal"))
 
 # 3. Writing boolean searches for databases ----------------------------------
 # from the newly grouped terms
 write_search(
-  grouped_terms1,
+  grouped_terms,
   languages = "English",
   exactphrase = T,
-  stemming = F,
+  stemming = T,
   closure = "full",
-  directory= "./output/final_searchstring_01", #saved to output folder
+  directory= "./output/initial_string-01", #saved to output folder
   writesearch = T
 )
