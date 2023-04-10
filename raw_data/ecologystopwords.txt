@@ -15,8 +15,6 @@ analyzes
 analyzing
 approach
 approaches
-area
-areas
 assess
 assessed
 assesses
@@ -50,8 +48,6 @@ collected
 collection
 collections
 collects
-community
-communities
 combination
 combinations
 combine
@@ -90,10 +86,6 @@ development
 difference
 differences
 east
-ecological
-ecology
-ecosystem
-ecosystems
 effect
 effective
 effectiveness
@@ -133,8 +125,6 @@ greater
 green
 group
 groups
-habitat
-habitats
 high
 higher
 highly
@@ -159,6 +149,7 @@ clear
 clears
 clarity
 index
+indices
 individual
 individuals
 interest
@@ -170,8 +161,6 @@ influence
 influences
 knowledge
 lake
-landscape
-landscapes
 large
 level
 levels
@@ -273,7 +262,6 @@ reduction
 reductions
 region
 regional
-regional
 regions
 related
 relative
@@ -286,7 +274,6 @@ research
 researcher
 researchers
 reserved
-response
 response
 responses
 result
@@ -348,6 +335,7 @@ system
 systematic
 systems
 theory
+theoretic
 transport
 treat
 treated
@@ -367,3 +355,4 @@ versus
 west
 wiley
 woman
+women

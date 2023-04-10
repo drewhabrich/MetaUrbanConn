@@ -15,6 +15,7 @@ colnames(initial_results)
 
 # Generating potential search terms
 ## First we need to include generic words to exclude from generation of new keywords
+## DEPENDING ON WHAT YOU ARE SEARCHING FOR THE STOPWORDS MAY NEED TO BE MODIFIED
 englishstopwords <- get_stopwords("English")
 ecologystopwords <- read_lines("./raw_data/ecologystopwords.txt")
 stopwords <- c(englishstopwords,ecologystopwords) 

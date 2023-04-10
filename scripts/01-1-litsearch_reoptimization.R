@@ -1,4 +1,4 @@
-## ---------------------------
+## HEADER---------------------------
 ## Script name: 01-1-litsearch_reoptimization
 ##
 ## Purpose of script: Reoptimize keywords using litsearchr, using the screened results,
@@ -47,7 +47,7 @@ glimpse(res)
 bs_titleterms <- extract_terms(bs_subset$title,
                           method = "fakerake", #using a modified RAPID AUTOMATIC KEYWORD EXTRACTION
                           ngrams = T, 
-                          min_freq = 3, # minimum term occurrence for inclusion
+                          min_freq = 2, # minimum term occurrence for inclusion
                           min_n = 2, # minimum number of words per term
                           stopwords = englishstopwords)
 bs_titleterms
@@ -59,19 +59,21 @@ bs_abstrterms <-extract_terms(bs_subset$abstract,
                           stopwords = stopwords)
 bs_abstrterms
 ## 3.2 benchmark and review articles terms ----
+### We can be more restrictive on how frequently the terms need to come up for inclusion, since there more entries here.
 res_titleterms<-extract_terms(res$title,
                           method = "fakerake", #using a modified RAPID AUTOMATIC KEYWORD EXTRACTION
                           ngrams = T, 
                           min_freq = 5, # minimum term occurrence for inclusion
                           min_n = 2, # minimum number of words per term
                           stopwords = stopwords)
+res_titleterms
 res_abstrterms<-extract_terms(res$abstract,
                           method = "fakerake", #using a modified RAPID AUTOMATIC KEYWORD EXTRACTION
                           ngrams = T, 
                           min_freq = 10, # minimum term occurrence for inclusion
                           min_n = 2, # minimum number of words per term
                           stopwords = stopwords)
-
+res_abstrterms
 ## clean and combine terms list
 ### combine
 terms <- unique(c(res_titleterms, res_abstrterms, bs_titleterms, bs_abstrterms))
@@ -155,9 +157,9 @@ grouped_terms <- list(
 
 ## make a list of the previous terms used in the initial search
 old_terms <- list(
-  urban = c("urban", "urban area", "city", "cities", "town"),
-  biodiversity = c("biodiversity", "wildlife", "plant", "tree", "bird", "avian", "arthropod", "insect", "mammal", "herptile", "reptile", "amphibian"),
-  outcome = c("occupancy", "occurrence", "abundance", "species richness", "diversity", "species response", "genetic diversity", "gene flow", "species distribution", "species densitiy", "species composition", "species assemblage", "community composition", "community assemblage", "population persistance", "population response", "distribution pattern", "spatial distribution", "movement", "dispersal"),
+  urban = c("urban", "urban areas", "city", "cities", "town"),
+  biodiversity = c("biodiversity", "wildlife", "plants", "trees", "birds", "avian", "arthropods", "insects", "mammals", "herptiles", "reptiles", "amphibians"),
+  outcome = c("occupancy", "occurrence", "abundance", "species richness", "diversity", "species responses", "genetic diversity", "gene flow", "species distributions", "species density", "species compositions", "species assemblages", "community composition", "community assemblages", "population persistance", "population responses", "distribution pattern", "spatial distribution", "movement", "dispersal"),
   connectivity = c("connectivity", "landscape connectivity", "functional connectivity", "structural connectivity", "habitat connectivity", "ecological connectivity", "habitat network", "ecological network", "corridor", "habitat corridor", "ecological corridor", "least-cost", "least cost", "circuit theory", "circuit-theory", "landscape resistance", "landscape permeability", "graph theory", "graph-theory", "isolation")
 )
 ## merge the lists
@@ -165,12 +167,50 @@ src_terms <- Map(c, old_terms, grouped_terms)
 
 # 5. Writing boolean searches for databases ----------------------------------
 # from the newly grouped terms
-write_search(
-  src_terms,
-  language = "English", 
+# write_search(
+#   src_terms,
+#   languages = "English", 
+#   exactphrase = T,
+#   stemming = T,
+#   closure = "none",
+#   directory= "./output/upd_exactfull_01-1", 
+#   writesearch = T
+# )
+
+# clean list of terms
+cleanterms <- list(
+  urban = c("urban", "urban areas", "city", "cities", "town", "urban environment","urban forest","urban matrix","urban greenspace","urban green","urban landscape","green infrastructure"),
+  biodiversity = c("biodiversity", "wildlife", "plants", "trees", "birds", "avian", "arthropods", "insects", "mammals", "herptiles", "reptiles", "amphibians"),
+  outcome = c("occupancy",	"occurrence",	"abundance",	"species richness",	"species responses",	"species density",	"species composition",	"species assemblages",	"species diversity",	"community composition",	"community assemblages",	"population responses",	"population persistence",	"population density",	"population differentiation",	"animal movement",	"dispersal distance",	"dispersal rate",	"genetic structure",	"gene flow",	"genetic diversity",	"genetic variation",	"distribution pattern",	"spatial distribution",	"diversity"),
+  connectivity = c("connectivity",	"patch connectivity",	"landscape connectivity",	"functional connectivity",	"structural connectivity",	"habitat connectivity",	"ecological connectivity",	"habitat network",	"ecological network",	"habitat corridor",	"ecological corridor",	"least cost",	"least-cost",	"graph theory",	"graph-theory",	"circuit theory",	"circuit-theory",	"landscape resistance",	"landscape permeability",	"resistance surface",	"isolation",	"patch isolation",	"habitat isolation")
+)
+
+stemmedterms <- list(
+  urban = c("urban", "urban area*", "city", "cities", "town*", "urban environment*","urban forest*","urban matrix","urban greenspace*","urban green","urban landscape*","green infrastructure*"),
+  biodiversity = c("biodiversity", "wildli*", "plant*", "tree*", "bird*", "avian", "arthropod*", "insect*", "mammal*", "herptile*", "reptile*", "amphibian*"),
+  outcome = c("occupan*",	"occurr*",	"abundan*",	"species richness",	"species response*",	"species densit*",	"species composition*",	"species assemblage*",	"species diversity",	"community composition*",	"community assemblage*",	"population response*",	"population persist*",	"population densit*",	"population differentiation",	"animal movement*",	"dispersal distance*",	"dispersal rate*",	"genetic structure",	"gene flow",	"genetic diversity",	"genetic variation",	"distribution pattern*",	"spatial distribution*",	"diversity"),
+  connectivity = c("connectivity",	"patch connectivity",	"landscape connectivity",	"functional connectivity",	"structural connectivity",	"habitat connectivity",	"ecological connectivity",	"habitat network*",	"ecological network*",	"habitat corridor*",	"ecological corridor*",	"least cost",	"least-cost",	"graph theor*",	"graph-theor*",	"circuit theory",	"circuit-theory",	"landscape resistance*",	"landscape permeabilit*",	"resistance surface*",	"isolation",	"patch isolation",	"habitat isolation")
+)
+
+# write search strings
+litsearchr::write_search(
+  cleanterms,
+  languages = "English", 
   exactphrase = T,
   stemming = T,
   closure = "none",
-  directory= "./output/upd_string_01-1", 
-  writesearch = T
+  directory= "./output/upd_exactfull_string01-1", 
+  writesearch = F,
+  verbose = T
+)
+
+litsearchr::write_search(
+  stemmedterms,
+  languages = "English", 
+  exactphrase = T,
+  stemming = F,
+  closure = "full",
+  directory= "./output/manualstem_exactfull_string01-1", 
+  writesearch = T,
+  verbose = T
 )

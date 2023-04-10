@@ -1,0 +1,9 @@
+(
+(urban OR "urban area*" OR city OR cities OR town* OR "urban environment*" OR "urban forest*" OR "urban matrix" OR "urban greenspace*" OR "urban green" OR "urban landscape*" OR "green infrastructure*") AND 
+
+(biodiver* OR wildli* OR vegetation OR plant* OR tree* OR bird* OR avian OR arthropod* OR insect* OR mammal* OR herptile* OR reptile* OR amphibian*) AND 
+
+(occupan* OR occurr* OR abundan* OR "species richness" OR "species response*" OR "species densit*" OR "species composition*" OR "species assemblage*" OR "species diversity" OR "species distribut*" OR "community composition*" OR "community assemblage*" OR "population response*" OR "population persist*" OR "population densit*" OR "population differentiation" OR movement* OR "animal movement*" OR dispersal OR "dispersal distance*" OR "dispersal rate*" OR "genetic structure" OR "gene flow" OR "genetic diversity" OR "genetic variation" OR "distribution pattern*" OR "spatial distribution*" OR diversity) AND 
+
+(connectivity OR "patch connectivity" OR "landscape connectivity" OR "functional connectivity" OR "structural connectivity" OR "habitat connectivity" OR "ecological connectivity" OR "habitat network*" OR "ecological network*" OR corridor* OR "habitat corridor*" OR "ecological corridor*" OR "least cost" OR least-cost OR "graph theor*" OR graph-theor* OR "circuit theory" OR circuit-theory OR "landscape resistance*" OR "landscape permeabilit*" OR "resistance surface*" OR isolation OR "patch isolation" OR "habitat isolation")
+)
