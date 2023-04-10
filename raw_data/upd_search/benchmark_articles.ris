@@ -1,0 +1,297 @@
+
+
+
+TY  - JOUR
+AU  - Shimazaki, Atsushi; Yamaura, Yuichi; Senzaki, Masayuki; Yabuhara, Yuki; Akasaka, Takumi; Nakamura, Futoshi
+TI  - Urban permeability for birds: An approach combining mobbing-call experiments and circuit theory
+PY  - 2016
+AB  - Abstract The urban matrix was recently shown to be a mosaic of heterogeneous dispersal habitats. We conducted a playback experiment of mobbing calls to examine the probabilities of forest birds to cross a distance of 50 m over urban matrix with different land-cover types in an urban area. We treated the reciprocal of the crossing probabilities as a movement resistance for forest birds. We drew resistance surfaces based on the land-cover maps of urban Sapporo. We applied a circuit theory to examine the relative role of a detour route consisting of a riparian corridor and urban matrix for dispersing forest bird individuals from continuous forest to an isolated green space in the midst of an urban area. Our results showed that wood cover had the highest crossing probability, while open land (grassland and pavement) had the lowest probabilities. Buildings and water surface displayed an intermediate probability. Resistance surfaces and flow maps at 25- and 50-m resolutions were very similar and suggested that dispersing individuals are likely to use the intervening building areas that dominate the urban matrix rather than detour through riparian corridors. Our results showed the useful combination of experimental approaches and circuit theory, and the importance of the spatial configuration of corridors, as well as the composition and management of dispersal habitats, to landscape connectivity.
+SP  - 167
+EP  - 175
+JF  - Urban Forestry & Urban Greening
+VL  - 19
+IS  - 19
+PB  - Elsevier BV
+DO  - 10.1016/j.ufug.2016.06.024
+ER  - 
+
+
+TY  - JOUR
+AU  - Turrini, Tabea; Knop, Eva
+TI  - A landscape ecology approach identifies important drivers of urban biodiversity.
+PY  - 2015
+AB  - Cities are growing rapidly worldwide, yet a mechanistic understanding of the impact of urbanization on biodiversity is lacking. We assessed the impact of urbanization on arthropod diversity (species richness and evenness) and abundance in a study of six cities and nearby intensively managed agricultural areas. Within the urban ecosystem, we disentangled the relative importance of two key landscape factors affecting biodiversity, namely the amount of vegetated area and patch isolation. To do so, we a priori selected sites that independently varied in the amount of vegetated area in the surrounding landscape at the 500-m scale and patch isolation at the 100-m scale, and we hold local patch characteristics constant. As indicator groups, we used bugs, beetles, leafhoppers, and spiders. Compared to intensively managed agricultural ecosystems, urban ecosystems supported a higher abundance of most indicator groups, a higher number of bug species, and a lower evenness of bug and beetle species. Within cities, a high amount of vegetated area increased species richness and abundance of most arthropod groups, whereas evenness showed no clear pattern. Patch isolation played only a limited role in urban ecosystems, which contrasts findings from agro-ecological studies. Our results show that urban areas can harbor a similar arthropod diversity and abundance compared to intensively managed agricultural ecosystems. Further, negative consequences of urbanization on arthropod diversity can be mitigated by providing sufficient vegetated space in the urban area, while patch connectivity is less important in an urban context. This highlights the need for applying a landscape ecological approach to understand the mechanisms shaping urban biodiversity and underlines the potential of appropriate urban planning for mitigating biodiversity loss.
+SP  - 1652
+EP  - 1667
+JF  - Global change biology
+VL  - 21
+IS  - 4
+PB  - Wiley-Blackwell
+DO  - 10.1111/gcb.12825
+ER  - 
+
+
+TY  - JOUR
+AU  - Lizée, Marie-Hélène; Manel, Stéphanie; Mauffrey, Jean-François; Tatoni, Thierry; Deschamps-Cottin, Magali
+TI  - Matrix configuration and patch isolation influences override the species–area relationship for urban butterfly communities
+PY  - 2011
+AB  - The aim of this paper is to examine the role of urban public parks in maintaining connectivity and butterfly assemblages. Using a regression framework, we first test the relative importance of park size and isolation in predicting abundance and species richness of butterfly assemblages across a set of 24 public parks within a large metropolitan area, Marseille (South-East France). Then, we focus on landscape features that affect diversity patterns of the recorded butterfly communities. In this second part, the urban landscape surrounding each park is described (within a 1 × 1 km window) according to two major components: vegetated areas (habitat patches) and impervious or built areas (matrix patches). Specifically, we aim to test whether the incorporation of this built component (matrix) in the landscape analysis provides new insights into the understanding of ecological connectivity in the urban environment. We found a significant effect of both matrix configuration (shape complexity of the built patches) and distance from regional species pool (park isolation) on diversity of butterflies that overrides park size in their contribution to variation in species richness. This result suggests that many previous studies of interactions between biodiversity and urban landscape have overlooked the influence of the built elements.
+SP  - 159
+EP  - 169
+JF  - Landscape Ecology
+VL  - 27
+IS  - 2
+PB  - Springer Science and Business Media LLC
+DO  - 10.1007/s10980-011-9651-x
+ER  - 
+
+
+TY  - JOUR
+AU  - Liu, Zhenhuan; Huang, Qiandu; Tang, Guoping
+TI  - Identification of urban flight corridors for migratory birds in the coastal regions of Shenzhen city based on three-dimensional landscapes
+PY  - 2020
+AB  - The rapid urban expansion in southern coastal regions of China can endanger the quality and connectivity of bird habits and thus challenge our capacity for protecting bird species in urban areas. Identifying the ecological corridors that allow migratory birds to and from urban green landscapes is therefore essential for conserving biodiversity in urban areas. This study aimed to explore how urban expansion in vertical direction affects the flying paths of migratory birds and seek measurements to enhance bird migration to and from urban areas. The ecological security pattern (ESP) for migratory birds in a coastal region near the Shenzhen city of China was determined based on three-dimensional landscape data and results were evaluated against historical eBird record abundance data. The positive agreement with historical bird abundance demonstrated that the consideration of three-dimensional landscape in parameterizing the resistance for ESPs can help identify the flight corridors for migratory birds in urban areas and the consequent sixteen key flight corridors with a total length of 454.78 km were identified in and around the Shenzhen city. The three-dimensional landscape data are essential for identifying flight corridors for migratory birds to and from urban landscapes. The extracted flight corridors in and around the Shenzhen city connected natural reserves with urban parks, thereby enlarging bird habitats and its conservation inside the Shenzhen city.
+SP  - 2043
+EP  - 2057
+JF  - Landscape Ecology
+VL  - 36
+IS  - 7
+PB  - Springer Science and Business Media LLC
+DO  - 10.1007/s10980-020-01032-6
+ER  - 
+
+
+TY  - JOUR
+AU  - Kim, Dohee; Shin, Wonhyeop; Choi, Heejoon; Kim, Jihwan; Song, Youngkeun
+TI  - Estimation of Ecological Connectivity in a City Based on Land Cover and Urban Habitat Maps
+PY  - 2020
+AB  - Anthropogenic land use has led to the loss and fragmentation of native habitats and disruption to ecosystem processes, resulting in a decline in landscape connectivity and biodiversity. Here, in order to find the potentials of improvements in ecological connectivity, we provide a spatial analysis to present differences in ecological connectivity based on land cover maps and urban habitat maps in Suwon city, Republic of Korea. We generated two permeability maps for use in a network analysis, one being land cover and the other urban habitat, including a 5-km buffer area from the city boundary. We then determined the current-flow betweenness centrality (CFBC) for each map. Our results indicate that forests are typically the most highly connected areas in both maps. However, in the land cover map results, nearly all high-priority areas were in the mountainous region (CFBC value: 0.0100 ± 0.0028), but the urban habitat indicated that grasslands and rivers within the city also significantly contribute to connectivity (CFBC value: 0.0071 ± 0.0022). The CFBC maps developed here could be used as a reference when introducing green infrastructure in cities. Before establishing ecological networks for urban areas, future work should integrate the land use and ecological data of different administrative districts with continuous ecological connection.
+SP  - 9529
+EP  - NA
+JF  - Sustainability
+VL  - 12
+IS  - 22
+PB  - MDPI AG
+DO  - 10.3390/su12229529
+ER  - 
+
+
+TY  - JOUR
+AU  - Kang, Wanmo; Minor, Emily S.; Park, Chan Ryul; Lee, Dowon
+TI  - Effects of habitat structure, human disturbance, and habitat connectivity on urban forest bird communities
+PY  - 2015
+AB  - As urbanization accelerates, urban biodiversity conservation is becoming a great concern for the maintenance of urban ecosystem functions. In particular, forest bird communities in urban areas have been recognized as a conservation target because of their functions in food webs and ecosystem services. But our understanding of which local- and landscape-scale factors influence native bird communities within urban green spaces is still insufficient to provide managers with information for effectively planning biodiversity management programs. Here we examine how local habitat characteristics, human disturbance, and habitat connectivity influence the diversity of forest bird communities in 44 small forest patches (0.5–20.0 ha) embedded in an urbanized landscape. Patch size exerted a positive influence on the diversity of most bird functional groups, and it had the greatest effects on total abundance and species richness. The second most important factor was human disturbance. Remnant patches with lower levels of human disturbance had higher diversity than newly established patches where intense human activities occurred more frequently. In addition, vegetation complexity and habitat connectivity were positively related to total species richness and abundance, respectively, but they were less important. Management strategies for the conservation of urban forest birds, therefore, should consider not only local improvements in habitat structure – through increased patch size, reduced human disturbance, and increased vegetation complexity – but also the maintenance of habitat connectivity.
+SP  - 857
+EP  - 870
+JF  - Urban Ecosystems
+VL  - 18
+IS  - 3
+PB  - Springer Science and Business Media LLC
+DO  - 10.1007/s11252-014-0433-5
+ER  - 
+
+
+TY  - JOUR
+AU  - Cox, Daniel T. C.; Inger, Richard; Hancock, Steven; Anderson, Karen; Gaston, Kevin J.
+TI  - Movement of feeder-using songbirds: the influence of urban features
+PY  - 2016
+AB  - Private gardens provide vital opportunities for people to interact with nature. The most popular form of interaction is through garden bird feeding. Understanding how landscape features and seasons determine patterns of movement of feeder-using songbirds is key to maximising the well-being benefits they provide. To determine these patterns we established three networks of automated data loggers along a gradient of greenspace fragmentation. Over a 12-month period we tracked 452 tagged blue tits Cyantistes caeruleus and great tits Parus major moving between feeder pairs 9,848 times, to address two questions: (i) Do urban features within different forms, and season, influence structural (presence-absence of connections between feeders by birds) and functional (frequency of these connections) connectivity? (ii) Are there general patterns of structural and functional connectivity across forms? Vegetation cover increased connectivity in all three networks, whereas the presence of road gaps negatively affected functional but not structural connectivity. Across networks structural connectivity was lowest in the summer when birds maintain breeding territories, however patterns of functional connectivity appeared to vary with habitat fragmentation. Using empirical data this study shows how key urban features and season influence movement of feeder-using songbirds, and we provide evidence that this is related to greenspace fragmentation.
+SP  - 37669
+EP  - 37669
+JF  - Scientific reports
+VL  - 6
+IS  - 1
+PB  - Nature Publishing Group
+DO  - 10.1038/srep37669
+ER  - 
+
+
+TY  - JOUR
+AU  - Braaker, Sonja; Ghazoul, Jaboury; Obrist, Martin K.; Moretti, Marco
+TI  - Habitat connectivity shapes urban arthropod communities: the key role of green roofs.
+PY  - 2014
+AB  - The installation of green roofs, defined here as rooftops with a shallow soil cover and extensive vegetation, has been proposed as a possible measure to mitigate the loss of green space caused by the steady growth of cities. However, the effectiveness of green roofs in supporting arthropod communities, and the extent to which they facilitate connectivity of these communities within the urban environment is currently largely unknown. We investigated the variation of species community composition (beta diversity) of four arthropod groups with contrasting mobility (Carabidae, Araneae, Curculionidae, and Apidae) on 40 green roofs and 40 extensively managed green sites on the ground in the city of Zurich, Switzerland. With redundancy analysis and variation partitioning, we (1) disentangled the relative importance of local environmental conditions, the surrounding land cover composition, and habitat connectivity on species community composition, (2) searched for specific spatial scales of habitat connectivity for the different arthropod groups, and (3) discussed the ecological and functional value of green roofs in cities. Our study revealed that on green roofs community composition of high-mobility arthropod groups (bees and weevils) were mainly shaped by habitat connectivity, while low-mobility arthropod groups (carabids and spiders) were more influenced by local environmental conditions. A similar but less pronounced pattern was found for ground communities. The high importance of habitat connectivity in shaping high-mobility species community composition indicates that these green roof communities are substantially connected by the frequent exchange of individuals among surrounding green roofs. On the other hand, low-mobility species communities on green roofs are more likely connected to ground sites than to other green roofs. The integration of green roofs in urban spatial planning strategies has great potential to enable higher connectivity among green spaces, so that eventually even communities of low-mobility species become connected. Furthermore, improving the design of green roofs (composition and configuration of vegetation and soil types) could enhance the ecological value, particularly for low-mobility species.
+SP  - 1010
+EP  - 1021
+JF  - Ecology
+VL  - 95
+IS  - 4
+PB  - Wiley-Blackwell
+DO  - 10.1890/13-0705.1
+ER  - 
+
+
+TY  - JOUR
+AU  - Evans, Brian S.; Kilpatrick, A. Marm; Hurlbert, Allen H.; Marra, Peter P.
+TI  - Dispersal in the Urban Matrix: Assessing the Influence of Landscape Permeability on the Settlement Patterns of Breeding Songbirds
+PY  - 2017
+AB  - The ability of organisms to disperse across urban landscapes is theorized to be constrained by habitat fragmentation. While previous research has shown the distribution of forest patches is a determinant of dispersal patterns among forest-obligate bird species, the impacts of habitat distribution on the dispersal of “urban-adapted” species, has yet to be examined. Here, we use capture-reencounter data of birds banded over a 9-year period at six banding stations in greater Washington, DC to assess dispersal in four species of songbirds and a translocation experiment to examine the influence of land cover on movement. Point count and land cover data were used to construct habitat suitability and landscape permeability surfaces, with the latter representing potential travels costs from the capture location to the surrounding landscape. To assess how dispersal processes are affected by urban land cover, we searched for previously banded birds at sampling locations within 1.5 km of each banding station and compared the distribution of sampling locations with and without observations of previously-banded birds. We found evidence that settlement of two of four focal species, the Northern Cardinal (Cardinalis cardinalis) and Gray Catbird (Dumetella carolinensis), was more likely in sites with high relative permeability. To experimentally explore the consequences of the urban matrix habitat on movement, we attached radio transmitters to male Cardinals, translocated individuals 1.5 km across high-intensity urban, suburban, and forested landscapes, and recorded the time to return to their territory. Return time was dependent on land cover with Cardinals translocated across suburban habitats returning significantly faster than those moved across the other two land use classes. Combined, our findings suggest that, even among some “urban-adapted” species, dispersal within urban environments may be influenced by landscape structure and composition.
+SP  - NA
+EP  - NA
+JF  - Frontiers in Ecology and Evolution
+VL  - 5
+IS  - NA
+PB  - Frontiers Media SA
+DO  - 10.3389/fevo.2017.00063
+ER  - 
+
+
+TY  - JOUR
+AU  - Su, Zhimin; Li, Xiaoma; Zhou, Weiqi; Ouyang, Zhiyun
+TI  - Effect of landscape pattern on insect species density within urban green spaces in Beijing, China.
+PY  - 2015
+AB  - Urban green space is an important refuge of biodiversity in urban areas. Therefore, it is crucial to understand the relationship between the landscape pattern of green spaces and biodiversity to mitigate the negative effects of urbanization. In this study, we collected insects from 45 green patches in Beijing during July 2012 using suction sampling. The green patches were dominated by managed lawns, mixed with scattered trees and shrubs. We examined the effects of landscape pattern on insect species density using hierarchical partitioning analysis and partial least squares regression. The results of the hierarchical partitioning analysis indicated that five explanatory variables, i.e., patch area (with 19.9% independent effects), connectivity (13.9%), distance to nearest patch (13.8%), diversity for patch types (11.0%), and patch shape (8.3%), significantly contributed to insect species density. With the partial least squares regression model, we found species density was negatively related to patch area, shape, connectivity, diversity for patch types and proportion of impervious surface at the significance level of p < 0.05 and positively related to proportion of vegetated land. Regression tree analysis further showed that the highest species density was found in green patches with an area <500 m2. Our results indicated that improvement in habitat quality, such as patch area and connectivity that are typically thought to be important for conservation, did not actually increase species density. However, increasing compactness (low-edge) of patch shape and landscape composition did have the expected effect. Therefore, it is recommended that the composition of the surrounding landscape should be considered simultaneously with planned improvements in local habitat quality.
+SP  - e0119276
+EP  - NA
+JF  - PloS one
+VL  - 10
+IS  - 3
+PB  - Public Library of Science
+DO  - 10.1371/journal.pone.0119276
+ER  - 
+
+
+TY  - JOUR
+AU  - Oliver, Amanda J.; Hong-Wa, Cynthia; Devonshire, Jodi; Olea, Kelly R.; Rivas, Gonzalo F.; Gahl, Megan K.
+TI  - Avifauna richness enhanced in large, isolated urban parks
+PY  - 2011
+AB  - NA
+SP  - 215
+EP  - 225
+JF  - Landscape and Urban Planning
+VL  - 102
+IS  - 4
+PB  - Elsevier BV
+DO  - 10.1016/j.landurbplan.2011.04.007
+ER  - 
+
+
+TY  - JOUR
+AU  - Lizée, Marie-Hélène; Tatoni, Thierry; Deschamps-Cottin, Magali
+TI  - Nested patterns in urban butterfly species assemblages: respective roles of plot management, park layout and landscape features
+PY  - 2015
+AB  - Increasing numbers of cities are currently developing sustainable policies aimed at promoting urban biodiversity and ecological dynamics through the planning of green networks and the implementation of more sustainable management practices. These human activities can strongly influence environmental factors on which the organization of ecological communities at different scales depends. Thus, it is of fundamental importance to understand the relative impact of local management, green space design and landscape features on the distribution and the abundance of species in urban areas. On the basis of 2 years of butterfly surveys in urban public parks within an extensive Mediterranean metropolitan area, Marseille (South-East France), the aim of this paper is to provide a better understanding of the effect of these three environmental scales (plot, park, landscape) on the composition and organization of species assemblages. Using variation partitioning and nestedness analysis on ecological data aggregated at plot-level and park-level respectively, we demonstrate the preponderant effect of landscape scale features on urban butterfly assemblages. Our results also highlight an important co-variation of plot management, park layout and urban landscape features, in their interaction with the community structure of urban butterflies. Although there is no significant species-area relationship, significantly nested patterns arise in species composition. Selective colonization appears as a driving force constraining the constitution of species assemblages within the city. However, a prospective study on adjacent more natural areas suggests that biotic limitations, interspecific competition and habitat filtering may play an important role if a larger portion of the urbanization gradient is explored, which remains to be investigated.
+SP  - 205
+EP  - 224
+JF  - Urban Ecosystems
+VL  - 19
+IS  - 1
+PB  - Springer Science and Business Media LLC
+DO  - 10.1007/s11252-015-0501-5
+ER  - 
+
+
+TY  - JOUR
+AU  - Choi, Heejoon; Song, Youngkeun; Kang, Wanmo; Thorne, James H.; Song, Wonkyong; Lee, Dong Kun
+TI  - LiDAR-derived three-dimensional ecological connectivity mapping for urban bird species
+PY  - 2021
+AB  - Although many studies have considered urban structure when investigating urban ecological networks, few have considered the three-dimensional (3D) structure of buildings as well as urban green spaces. Airborne LiDAR datasets provide an opportunity to quantify 3D structure and evaluate 3D metrics in connectivity mapping. We examined an urban ecological network using the 3D structure of both green spaces and buildings. Using breeding-season bird species observations and airborne LiDAR data collected, we assessed the influence of 3D structural variables on species diversity. We used correlation analyses to determine if vertical distribution, volume, area, and height of both buildings and vegetation were related to bird species diversity. Then we conducted circuit theory-based current flow betweenness centrality (CFBC) analysis using the LiDAR-derived structural variables. We found that the volumes of buildings and 8–10 m vegetation heights were both highly correlated with species richness per unit area. There were significant differences between 2D and 3D connectivity analysis using LiDAR-derived variables among urban forest patches, boulevards, and apartment complexes. Within urban forest patches and parks, 3D CFBC represented canopy structural characteristics well, by showing high variance in spatial distributions. The 3D CFBC results indicated that adjacent high-rise buildings, dense apartment complexes, and densely urbanized areas were isolated, as characterized by low centrality values, but that vegetation planted in open spaces between buildings could improve connectivity by linking isolated areas to core areas. Our research highlights the importance of considering 3D structure in planning and managing urban ecological connectivity.
+SP  - 581
+EP  - 599
+JF  - Landscape Ecology
+VL  - 36
+IS  - 2
+PB  - Springer Science and Business Media LLC
+DO  - 10.1007/s10980-020-01165-8
+ER  - 
+
+
+TY  - JOUR
+AU  - Soga, Masashi; Koike, Shinsuke
+TI  - Relative importance of quantity, quality and isolation of patches for butterfly diversity in fragmented urban forests
+PY  - 2011
+AB  - The majority of forests in urban areas are small and isolated. Improving habitat quality of small forests instead of increasing habitat size and connectivity could be an effective means of conserving the biodiversity of such highly fragmented landscapes. In this study, we investigated the relative importance of habitat quantity, quality and isolation on butterfly assemblages in urban fragmented forests in Tokyo, Japan. We used four habitat geographic parameters: (1) fragment size, (2) shape index, (3) isolation (distance to the mainland), and (4) connectivity; and three habitat quality parameters: (1) herbaceous nectar plant abundance, (2) herbaceous nectar plant diversity, and (3) larval host plant diversity. We surveyed butterfly assemblages along transects in 20 forest fragments that ranged in size from 1 to 122 ha. We used generalized linear models to relate the number of species in a fragment to four habitat geographic parameters and three habitat quality parameters. The averaged models based on AICc showed that fragment size had a strong positive effect on butterfly species richness. There was also a positive effect of herbaceous nectar plant abundance on species diversity. These findings suggest that improving the habitat quality of small and isolated forests in highly fragmented landscapes may be capable of maintaining levels of butterfly diversity comparable to those of large fragments.
+SP  - 265
+EP  - 271
+JF  - Ecological Research
+VL  - 27
+IS  - 2
+PB  - Wiley
+DO  - 10.1007/s11284-011-0896-2
+ER  - 
+
+
+TY  - JOUR
+AU  - Grafius, Darren R.; Corstanje, Ronald; Siriwardena, Gavin M.; Plummer, Kate E.; Harris, James A.
+TI  - A bird’s eye view: using circuit theory to study urban landscape connectivity for birds
+PY  - 2017
+AB  - Connectivity is fundamental to understanding how landscape form influences ecological function. However, uncertainties persist due to the difficulty and expense of gathering empirical data to drive or to validate connectivity models, especially in urban areas, where relationships are multifaceted and the habitat matrix cannot be considered to be binary. This research used circuit theory to model urban bird flows (i.e. ‘current’), and compared results to observed abundance. The aims were to explore the ability of this approach to predict wildlife flows and to test relationships between modelled connectivity and variation in abundance. Circuitscape was used to model functional connectivity in Bedford, Luton/Dunstable, and Milton Keynes, UK, for great tits (Parus major) and blue tits (Cyanistes caeruleus), drawing parameters from published studies of woodland bird flows in urban environments. Model performance was then tested against observed abundance data. Modelled current showed a weak yet positive agreement with combined abundance for P. major and C. caeruleus. Weaker correlations were found for other woodland species, suggesting the approach may be expandable if re-parameterised. Trees provide suitable habitat for urban woodland bird species, but their location in large, contiguous patches and corridors along barriers also facilitates connectivity networks throughout the urban matrix. Urban connectivity studies are well-served by the advantages of circuit theory approaches, and benefit from the empirical study of wildlife flows in these landscapes to parameterise this type of modelling more explicitly. Such results can prove informative and beneficial in designing urban green space and new developments.
+SP  - 1771
+EP  - 1787
+JF  - Landscape ecology
+VL  - 32
+IS  - 9
+PB  - Springer Netherlands
+DO  - 10.1007/s10980-017-0548-1
+ER  - 
+
+
+TY  - JOUR
+AU  - Beninde, Joscha; Feldmeier, Stephan; Werner, Maike; Peroverde, Daniel; Schulte, Ulrich; Hochkirch, Axel; Veith, Michael
+TI  - Cityscape genetics: structural vs. functional connectivity of an urban lizard population.
+PY  - 2016
+AB  - Functional connectivity is essential for the long-term persistence of populations. However, many studies assess connectivity with a focus on structural connectivity only. Cityscapes, namely urban landscapes, are particularly dynamic and include numerous potential anthropogenic barriers to animal movements, such as roads, traffic or buildings. To assess and compare structural connectivity of habitats and functional connectivity of gene flow of an urban lizard, we here combined species distribution models (SDMs) with an individual-based landscape genetic optimization procedure. The most important environmental factors of the SDMs are structural diversity and substrate type, with high and medium levels of structural diversity as well as open and rocky/gravel substrates contributing most to structural connectivity. By contrast, water cover was the best model of all environmental factors following landscape genetic optimization. The river is thus a major barrier to gene flow, while of the typical anthropogenic factors only buildings showed an effect. Nonetheless, using SDMs as a basis for landscape genetic optimization provided the highest ranked model for functional connectivity. Optimizing SDMs in this way can provide a sound basis for models of gene flow of the cityscape, and elsewhere, while presence-only and presence-absence modelling approaches showed differences in performance. Additionally, interpretation of results based on SDM factor importance can be misleading, dictating more thorough analyses following optimization of SDMs. Such approaches can be adopted for management strategies, for example aiming to connect native common wall lizard populations or disconnect them from non-native introduced populations, which are currently spreading in many cities in Central Europe.
+SP  - 4984
+EP  - 5000
+JF  - Molecular ecology
+VL  - 25
+IS  - 20
+PB  - Wiley-Blackwell
+DO  - 10.1111/mec.13810
+ER  - 
+
+
+TY  - JOUR
+AU  - Shanahan, Danielle F.; Miller, Craig A.; Possingham, Hugh P.; Fuller, Richard A.
+TI  - The influence of patch area and connectivity on avian communities in urban revegetation
+PY  - 2011
+AB  - NA
+SP  - 722
+EP  - 729
+JF  - Biological Conservation
+VL  - 144
+IS  - 2
+PB  - Elsevier BV
+DO  - 10.1016/j.biocon.2010.10.014
+ER  - 
+
+
+TY  - JOUR
+AU  - Öckinger, Erik; Dannestam, Åse; Smith, Henrik G.
+TI  - The importance of fragmentation and habitat quality of urban grasslands for butterfly diversity
+PY  - 2009
+AB  - NA
+SP  - 31
+EP  - 37
+JF  - Landscape and Urban Planning
+VL  - 93
+IS  - 1
+PB  - Elsevier BV
+DO  - 10.1016/j.landurbplan.2009.05.021
+ER  - 
+
+
+TY  - JOUR
+AU  - Song, Wonkyong; Kim, Eun Young
+TI  - Landscape factors affecting the distribution of the great tit in fragmented urban forests of Seoul, South Korea
+PY  - 2015
+AB  - Seoul City, as the capital and largest metropolis of South Korea, has high population density, and its remaining forests are extremely fragmented as a result of intensive development. The purpose of this study is to analyze the distribution of the great tit (Parus major) and develop a habitat model. Tits have been known as forest birds that inhabit urban forests in Seoul City. A Seoul biotope map and land cover map were combined, and the urban forest areas were delineated on these maps. As factors affecting the distribution of the great tit, landscape indices were calculated by separating them into intrapatch indices, namely logged patch area (PA), area-weighted mean patch shape index (PSI), tree rate (TR), and tree area (TA), and interpatch indices, namely patch degree (PD), patch betweenness (PB), patch proximity (PP), and difference probability of connectivity (DPC), to analyze the internal properties of the patches and their connectivity by tit occurrence data. The results of a t test analyzing the differences of habitat variables by great tit presence/absence and distribution showed differences in PA (p < 0.05), PSI (p < 0.001), TR (p < 0.01), TA (p < 0.001), PD (p < 0.05), PB (p < 0.01), PP (p < 0.05), and DPC (p < 0.1). In the results of logistic regression modeling, in most cases, more than one model had ΔAICc less than 2.0, suggesting that multiple models may be the best model. In the comprehensive models, the TR, PB, and DPC metrics were the best predictors. Among all variables in the intrahabitat model, PSI was the best predictor of species occurrence. Within the interhabitat model, DPC was the best predictor and had a positive relationship with species occurrence, which is the most important of all the factors. In other words, the great tit is more likely to be found in a large circular forest patch than a small and long-shaped forest patch, and connectivity in the threshold distance is the most important factor in predicting great tit occurrence. These results suggest that ecological potential, not only “location potential” but also “supply potential,” should be considered in fragmented urban forests.
+SP  - 73
+EP  - 83
+JF  - Landscape and Ecological Engineering
+VL  - 12
+IS  - 1
+PB  - Springer Science and Business Media LLC
+DO  - 10.1007/s11355-015-0280-4
+ER  - 
+
+
+
+
+
+
+
+
+
+
+
