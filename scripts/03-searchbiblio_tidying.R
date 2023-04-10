@@ -12,15 +12,16 @@ glimpse(initial_dat) #16 columns, all 'character' format
 ## How many of the columns are *mostly* empty
 initial_dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
 ## Remove unnecessary columns (Keywords, notes)
-initial_dat <- initial_dat %>% select(-c(keywords,notes))
+initial_dat <- initial_dat %>% select(-c(keywords,notes, publisher,end_page,issue))
 ## Coerce year into numeric format
 initial_dat <- initial_dat %>% mutate(year=as.numeric(year)) %>% as_tibble() #change year to be numeric instead of character
 ## Save as a seperate dataframe before any major manipulations ##
 dat<-initial_dat 
+glimpse(dat)
 
 ## 2.1. Tidy the dataframe and fill empty cells ----
 ## Currently there are empty cells in these columns:
-dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% select(!c("source_type","start_page","end_page")) %>% as_tibble())
+dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% select(!c("source_type","start_page")) %>% as_tibble())
 
 ### 2.1.1. Fill Journal information
 ### Fill empty cells in the "journal" column with the corresponding values from the "source" column (ProQuest/SCOPUS artifact). 
@@ -51,7 +52,7 @@ dat <- dat %>%
   relocate(year, .after = author) %>% relocate(url, .after = doi)
 
 # *How many empty cells are still left?* 
-dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% select(!c("source_type","start_page","end_page")) %>% as_tibble())
+dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% select(!c("source_type","start_page")) %>% as_tibble())
 
 ## 2.2. Retrieve missing digital identifiers (DOI and URLs) ----
 ## Is there a pattern to which entries are missing DOI? Or URLS?

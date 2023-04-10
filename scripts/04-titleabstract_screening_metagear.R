@@ -7,6 +7,7 @@ library(metagear) #v0.7.0
 # 2. Read in the bibliographic data set ------------------------------------
 # rm(list=ls()) #remove everything in the R environment, use as needed.
 initial_dat <- read_csv("./data/clean_bibliography-03.csv", col_names = T)
+
 # quickly verify that everything is in order:
 glimpse(initial_dat)
 # check for missing data
@@ -16,12 +17,12 @@ initial_dat %>%
 # 3. MetaGear screening ---------------------------------------------------
 ### Create the review excel sheet and initialize format for abstract screening
 
-# bib_unscreened <- effort_distribute(initial_dat, reviewers="drew", initialize = T, save_split = T, directory = "./output/") #only need to run once, uncomment if needed
+# bib_unscreened <- effort_distribute(initial_dat, reviewers="drew1", initialize = T, save_split = T, directory = "./output/") #only need to run once, uncomment if needed
 # colnames(bib_unscreened)
 
 ### Use the built in GUI for metaGear to screen articles -----
 # NOTE: YOU HAVE TO SAVE BEFORE QUITTING THE GUI OR YOU'LL LOSE PROGRESS, it will update the effort_*reviewer*.csv file
-abstract_screener(file="./output/effort_drew.csv",
+abstract_screener(file="./output/effort_drew1.csv",
                   aReviewer = "drew",
                   unscreenedColumnName = "INCLUDE",
                   unscreenedValue = "not vetted",
