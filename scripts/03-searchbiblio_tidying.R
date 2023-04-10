@@ -133,10 +133,3 @@ n_distinct(dat$jour_s) #distinct journal entries (this only matches on EXACT)
 # Save the cleaned bibliographic dataframe to .csv for screening
 clean_dat <- dat
 write_csv(clean_dat, "./data/clean_bibliography-03.csv", col_names = T)
-
-######TEST ZONE#####
-# glimpse(bibs) 
-# set.seed(1010)
-# datm<-bibs %>% filter(INCLUDE=="YES") %>% sample_n(50, replace=F) %>% select(c("author","title","doi","journal"))
-# titles <- as.vector(datm$title)
-# cr_datm<-cr_works(query = titles, select = c("DOI", "title", "container-title", "published-print"), .progress = "text")
