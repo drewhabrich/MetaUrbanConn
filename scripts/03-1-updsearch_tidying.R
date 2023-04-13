@@ -1,8 +1,8 @@
 ## HEADER---------------------------
 ## Script name: updbiblio_tidying
 ##
-## Purpose of script:
-##
+## Purpose of script: Tidy up the bibliographic dataframe for screening; 
+##                    filling in empty cells and and columns.
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-04-05
@@ -45,10 +45,18 @@ updat %>% filter(is.na(year)) %>% view #can we find by doi?
 updat %>% filter(is.na(title)) %>% view #dois dont show up on crossref
 updat %>% filter(is.na(journal)) %>% view #do we need these? Can I populate it from SOURCETYPE?
 
+### 2.1.0 Check the authors column, are there any issues ----
 ### remove authorless entries
-updat <- updat %>% filter(!is.na(author)) 
+updat <- updat %>% filter(!is.na(author))
 
-### 2.1.1. Fill Journal information
+### find rows where the author list is messy (includes AND and ; to seperate authors)
+authx <- updat %>% filter(str_detect(author, ";")) %>% 
+          mutate(author = str_replace_all(author, " and ", ", ")) #replace with a semicolon
+authindex <- which(str_detect(updat$author, ";")) #get the index of which rows were modified
+
+updat$author[authindex] <- authx$author #replace according to the index
+
+### 2.1.1. Fill Journal information ----
 ### Fill empty cells in the "journal" column with the corresponding values from the "source" column (ProQuest/SCOPUS artifact). 
 updat <- updat %>% mutate(journal = source)
 ### Fill the last remaining empty 'journals' with the source type if it is not a journal (e.g. report, book, or conference paper)
@@ -61,7 +69,7 @@ updat <- updat %>%
   mutate(jour_s = str_to_title(jour_s)) %>% #coerce to title-case
   mutate(jour_s = str_replace_all(jour_s, "\\b(And|In|Of|The|For)\\b", str_to_lower)) #conjunctions to lowercase
 
-### 2.1.2  Fill any missing 'year' data 
+### 2.1.2  Fill any missing 'year' data ----
 ### Fill missing years based on DOI
 year_doi <- updat %>% filter(is.na(year)) %>% select(doi, title, url) #filter only the entries with missing year
 year_doi <- cr_works(dois = year_doi$doi)$data #extract data from crossref based on  year
