@@ -6,12 +6,6 @@ Content contained here will contain:
 - output generated through R (modified data files, figures, tables etc.)
 - template documents for pdf data extractions along with explanations and rationale.
 
-## ReadMe/Meta-data best practices:
-- Include package version information and any external software used
-- Describe files in a logical order
-- Describe any column/variable names (especially units)
-- Include which scripts specific outputs come from
-
 ## Project structure: Every folder contains a README to explain what it contains
 - Raw Data: Data imported into your project from some data source. Mostly excel or txt documents. Metadata should include date of download or collection, original source and re-use info.
 - Output - derived data: Datasets created by altering some raw dataset e.g., merging databases, cleaning up data, subsets, etc. 
