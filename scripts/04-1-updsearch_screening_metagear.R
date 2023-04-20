@@ -20,16 +20,16 @@ library(metagear) #v0.7.0
 
 # 2. Import the cleaned and deduplicated bibliography to be screened -----
 initial_dat <- read_csv("./data/clean_bibliography-03-1.csv", col_names = T)
-# Quickly verify that everything is in order:
+## Quickly verify that everything is in order:
 glimpse(initial_dat)
-# remove the 'database' column from the dataframe to faciliate merging results from different screening steps
+## remove the 'database' column from the dataframe to faciliate merging results from different screening steps
 dat <- initial_dat %>% select(!"database")
-# initialize the dataframe for screening
+## initialize the dataframe for screening (uncomment below to initialize)
 # bib_unscreened <- effort_distribute(dat, reviewers="drew2", initialize = T, save_split = T, directory = "./output/") #only need to run once, uncomment if needed
 # colnames(bib_unscreened)
 
 ### Import the previously screened entries and merge them with the new dataframe 
-### This minimizes Minimize rescreening efforts
+### This minimizes re-screening entries multiple times
 prv.screen <- read_csv("./output/effort_drew1.csv", col_names = T)
 upd.screen <- read_csv("./output/effort_drew2.csv", col_names = T)
 
@@ -111,10 +111,9 @@ abstract_screener(file="./output/prvscreen_review-04-1.csv",
 #                   theButtons = c("Structural","Functional","Genetic","ObsMovement", "Reevaluate"),
 #                   keyBindingToButtons = c("q","w","e","r","t")) 
 
-# 4. WIP Screening effort results ----
+# 4. Screening effort results ----
 ## read in the screened results
-glimpse(bibscreened)
-bibscreened <- read_csv("./output/upd_screening_effort-04-1.csv", col_names = T)
+bibscreened <- read_csv("./output/unscreenedbib-04-1.csv", col_names = T)
 bibscreened %>% 
   group_by(INCLUDE) %>% #group by category
   summarize(count=n()) %>% #summarize based on count of each category
@@ -127,4 +126,49 @@ bibscreened %>%
                              TRUE ~ "IN PROGRESS, not vetted yet")) %>% 
   arrange(desc(percentage))
 
+# What journals are the YES, MAYBE, and REVIEW
+bibscreened %>% 
+  filter(INCLUDE=="YES" | INCLUDE=="MAYBE") %>% 
+  group_by(jour_s) %>% 
+  count(jour_s) %>% 
+  ggplot(aes(x=n, y = reorder(jour_s,n))) + #reorder to descending frequency
+  geom_bar(stat="identity", fill = "steelblue", color = "white") +
+  labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
+  theme(axis.text.y = element_text(size=5)) +  scale_y_discrete(labels = function(x) str_trunc(x, 35))
+
+## How many entries are there for the categories
+### For entries in the YES category, #What is the maximum number of articles from 1 journal?
+bibscreened %>% filter(INCLUDE=="YES") %>% 
+  group_by(jour_s) %>% count(jour_s) %>% 
+  arrange(desc(n)) 
+### For entries in the MAYBE category, #What is the maximum number of articles from 1 journal?
+bibscreened %>% filter(INCLUDE=="MAYBE") %>% 
+  group_by(jour_s) %>% count(jour_s) %>% 
+  arrange(desc(n)) 
+
+### How many journals have more than 5 entries (across all decision groups)
+bibscreened %>% 
+  group_by(jour_s) %>% count(jour_s) %>% 
+  arrange(desc(n)) %>% 
+  filter(n >= 5) %>% n_distinct() 
+
+## Plot all the INCLUDE categories
+### pull the list of journals with >5 entries
+jlist <- bibscreened %>% filter(INCLUDE!="not vetted") %>% 
+  group_by(jour_s) %>% count(jour_s) %>% 
+  filter(n >= 5) %>% pull(jour_s)
+
+bibscreened %>% 
+  filter(INCLUDE!="not vetted") %>%
+  filter(jour_s %in% jlist) %>% #un/comment this line to get ALL the journals, very cluttered with all. 
+  group_by(jour_s, INCLUDE) %>%
+  summarise(count = n()) %>%
+  ungroup() %>% 
+  ggplot(aes(x= count, y = reorder(jour_s,count), fill = INCLUDE)) + #reorder to descending frequency
+  geom_bar(stat="identity", position = "stack", colour="black") +
+  labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
+  theme_bw()+ #to standardize to a common theme
+  theme(axis.text.y = element_text(size = 5)) + #specific modifications to the theme
+  scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
+  scale_x_continuous(limits = c(0, 120), breaks = seq(0, 120, 5), expand=expand_scale(mult=c(0,0.1))) 
 # TEST ZONE ----
