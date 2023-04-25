@@ -42,13 +42,14 @@ merged_df <- upd.screen %>%
   relocate(INCLUDE, .after = "REVIEWERS") %>% 
   select(-INCLUDE_upd, -INCLUDE_prv)
 
+### create dataframes for each decision, so we can just screen the unscreened stuff
 df_unscreened <- merged_df %>% filter(INCLUDE == "not vetted")
 df_rev <- merged_df %>% filter(INCLUDE == "REVIEW")
 df_yes <- merged_df %>% filter(INCLUDE == "YES")
 df_myb <- merged_df %>% filter(INCLUDE == "MAYBE")
 
-## Write the merged dataframe to csv for screening
-write_csv(merged_df, "./output/upd_screening_effort-04-1.csv", col_names = T) #uncomment if needed, only need to do it once
+## Write the merged dataframe to csv for screening (RERUNNIG THIS WILL CREATE MORE CSVs, proceed with caution)
+#write_csv(merged_df, "./output/upd_screening_effort-04-1.csv", col_names = T) #uncomment if needed, only need to do it once
 
 ## Write a csv for each group in the previously screened, for revision later.
 # write_csv(df_unscreened, "./output/unscreenedbib-04-1.csv", col_names = T)
@@ -182,7 +183,7 @@ fullscreen <- updscreening %>%
               relocate(INCLUDE, .after = "REVIEWERS") %>% 
               select(-INCLUDE.x, -INCLUDE.y)
 
-fullscreen %>% 
+screensummary_table <- fullscreen %>% 
   group_by(INCLUDE) %>% #group by category
   summarize(count=n()) %>% #summarize based on count of each category
   mutate(percentage = count/nrow(fullscreen)*100, #estimate the percentage in each category
@@ -193,5 +194,143 @@ fullscreen %>%
                              INCLUDE == "REVIEW" ~ "Review/Methodology/Framework articles",
                              TRUE ~ "IN PROGRESS, not vetted yet")) %>% 
   arrange(desc(percentage))
+write_csv(screensummary_table, file="./output/tables/final_screenres_table-04-1.csv")
+
+## 5.1. Merge citesource ----
+# merge results with citesource by screening effort/results
+fullscreen <- fullscreen %>% mutate(database = initial_dat$database)
+## Write to csv to work with later
+write_csv(fullscreen, file = "./data/final_tiab_screening-04-1.csv")
+
+## Visualize results
+### Yes, maybe, reviews
+fullscreen %>% 
+  filter(INCLUDE!="NOabstr" & INCLUDE!="NOtitle") %>%
+  group_by(jour_s, INCLUDE) %>%
+  summarise(count = n()) %>%
+  filter(count > 1) %>% 
+  ungroup() %>% 
+  ggplot(aes(x= count, y = reorder(jour_s,count), fill = INCLUDE)) + #reorder to descending frequency
+  geom_bar(stat="identity", position = "stack", colour="black") +
+  labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
+  theme_bw()+ #to standardize to a common theme
+  theme(axis.text.y = element_text(size = 5),
+        axis.text.x = element_text(size = 10, angle = 45)) + #specific modifications to the theme
+  scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
+  scale_x_continuous(expand = c(0, 0), limits = c(0, 105), breaks = seq(0, 105, 5))  + theme(axis.text = element_text(hjust = 0.75),
+    axis.text.y = element_text(size = 4),
+    legend.position = c(0.9, 0.7)) + theme(legend.position = c(0.85, 0.7))
+
+#Just YES
+fullscreen %>% 
+  filter(INCLUDE=="YES") %>%
+  group_by(jour_s) %>%
+  summarise(count = n()) %>%
+  filter(count > 1) %>% 
+  ggplot(aes(x= count, y = reorder(jour_s,count))) + #reorder to descending frequency
+  geom_bar(stat="identity", position = "stack", colour="black", fill="goldenrod") +
+  labs(x = "Frequency", y = "Journal", title = "Frequency of 'YES' in journals with >1 entry") +
+  theme_bw()+ #to standardize to a common theme
+  theme(axis.text.y = element_text(size = 5)) + #specific modifications to the theme
+  scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
+  scale_x_continuous(expand = c(0, 0), limits = c(0, 40), breaks = seq(0, 40, 5)) 
+
+# 6. WIP PRISMA screening results - THIS CAN BE MODIFIED--------------
+library(PRISMA2020) #v1.1.1
+library(DiagrammeR) #v1.0.9
+
+#prismainfo <- read.csv(system.file("extdata", "PRISMA.csv", package = "PRISMA2020"))
+# Read in the template from the package directory; edit boxtext column to change text
+pristemp <- read_csv("./data/PRISMA_template-02-2.csv") 
+pristemp <- pristemp %>% select(-1) #remove this column...
+
+## Identify how many entries were removed during tidying; inaccessible
+pristemp[15,"n"] <- as.character(as.numeric(pristemp[5,"n"]) - as.numeric(pristemp[13,"n"]) - nrow(initial_dat))
+pristemp[15,"boxtext"] <- c("Records removed: inaccessible")
+
+## Coerce to list, you can also modify this list to generate the flowdiagram. 
+prisma <- PRISMA_data(pristemp) 
+
+# Populate the PRISMA list from dataframe information! Use NA to remove the text from the diagram
+prisma$newstud_text <- "Identification of potential candidate studies for meta-analysis"
+prisma$register_results <- NA
+prisma$website_results <-  
+prisma$organisation_results <- NA
+prisma$excluded_automatic <- NA
+prisma$other_sought_reports <- NA
+prisma$other_notretrieved_reports <- NA
+prisma$other_assessed <- NA
+prisma$records_screened <- as.numeric(pristemp[5,"n"]) - as.numeric(pristemp[13,"n"]) - as.numeric(pristemp[15,"n"])
+prisma$records_screened_text <- c("Records screened on Title")
+prisma$records_excluded <- nrow(fullscreen %>% filter(INCLUDE == "NOtitle")) 
+prisma$records_excluded_text <- "Exclusion reasons: \n- Not terrestrial-based\n- Not in urban ecosystem\n- No indication of config/connectivity metric"
+
+prisma$dbr_sought_reports <- nrow(fullscreen) - nrow(fullscreen %>% filter(INCLUDE == "NOtitle"))
+prisma$dbr_sought_reports_text <- "Records screened on Abstract"
+prisma$dbr_notretrieved_reports <- nrow(fullscreen %>% filter(INCLUDE == "NOabstr"))
+prisma$dbr_notretrieved_reports_text <- "Exclusion reasons: \nNot in an urban area or no indication of \nconfiguration or connectivity metric used."
+prisma$dbr_assessed <- nrow(fullscreen) - nrow(fullscreen %>% filter(INCLUDE == "NOtitle")) - nrow(fullscreen %>% filter(INCLUDE == "NOabstr"))
+prisma$dbr_assessed_text <- "Records assessed for eligibility"
+prisma$dbr_excluded <- fullscreen %>% filter(INCLUDE %in% c("REVIEW")) %>% count() 
+prisma$dbr_excluded_text <- "Records identified as review article"
+
+prisma$new_studies <- fullscreen %>% filter(INCLUDE %in% c("YES","MAYBE")) %>% nrow() 
+prisma$new_studies_text <- "Records eligible for full-text screening"
+prisma$new_reports <- NA
+prisma$new_reports_text <- NA
+prisma$total_studies <- fullscreen %>% filter(INCLUDE =="YES") %>% count()
+prisma$total_reports <- fullscreen %>% filter(INCLUDE =="MAYBE") %>% count()
+prisma$total_studies_text <- "Total studies identified as YES"
+prisma$total_reports_text <- "Total studies identified as MAYBE"
+prisma$included_text <- "Screen full-text"
+
+# create and save the PRISMA plot
+prismaplot <- PRISMA_flowdiagram(prisma,
+                                 fontsize = 12,
+                                 interactive = F,
+                                 previous = T,
+                                 other = T,
+                                 detail_databases = T,
+                                 detail_registers = F)
+prismaplot$x$diagram <- gsub("A->19", "2->4", prismaplot$x$diagram)
+prismaplot$x$diagram <- gsub("2->A", "", prismaplot$x$diagram)
+prismaplot$x$diagram <- gsub("14->15", "", prismaplot$x$diagram)
+prismaplot
+
+graph <- prismaplot$x$diagram
+class(graph)
+grViz(graph)
+#print(prismaplot$x$diagram)
+
+
 
 # TEST ZONE ----
+prismaplot$x$diagram <- gsub("15->16", "", prismaplot$x$diagram);prismaplot$x$diagram <- gsub("15->17", "", prismaplot$x$diagram)
+prismaplot$x$diagram <- gsub("17->18", "", prismaplot$x$diagram);prismaplot$x$diagram <- gsub("17->B", "", prismaplot$x$diagram)
+prismaplot
+
+DiagrammeR::grViz(prismaplot$x$diagram)
+get_node_info(prismaplot)
+graph_stmt(prismaplot)
+
+prismaplot$x$diagram <- gsub("pos = \"14.25,1.5!\",", "pos = \"14.25,7.5!\",", prismaplot$x$diagram)
+prismaplot$x$diagram <- gsub("arrowhead = normal,\n          arrowtail = none]\n        14->15", "arrowhead = none,\n          arrowtail = none]\n        14->B", prismaplot$x$diagram)
+prismaplot$x$diagram <- gsub("arrowhead = none,\n          arrowtail = none]\n        17->B", "arrowhead = normal,\n          arrowtail = none]\n        B->4", prismaplot$x$diagram)
+prismaplot$x$diagram <- gsub("edge [\n          color = Black,\n          arrowhead = normal,\n          arrowtail = none,\n          constraint = FALSE\n        ]\n        B->12;", "",prismaplot$x$diagram)
+prismaplot$x$diagram <- gsub("node [\n        shape = box,\n        fontname = Helvetica,\n        color = Gainsboro]\n      15 [\n        label = \"Reports sought for retrieval\n(n = NA)\",\n        style = \"filled\",\n        width = 3.5,\n        height = 0.5,\n        pos = \"14.25,5!\",\n        tooltip = \"Reports sought for retrieval (other)\"\n      ]\n      node [\n        shape = box,\n        fontname = Helvetica,\n        color = Gainsboro]\n      16 [\n        label = \"Reports not retrieved\n(n = NA)\",\n        style = \"filled\",\n        width = 3.5,\n        height = 0.5,\n        pos = \"18.25,5!\",\n        tooltip = \"Reports not retrieved (other)\"\n      ]\n      node [\n        shape = box,\n        fontname = Helvetica,\n        color = Gainsboro\n      ]\n      17 [\n        label = \"Reports assessed for eligibility\n(n = NA)\",\n        style = \"filled\",\n        width = 3.5,\n        height = 0.5,\n        pos = \"14.25,3.5!\",\n        tooltip = \"Reports assessed for eligibility (other)\"\n      ]\n      node [\n        shape = box,\n        fontname = Helvetica,\n        color = Gainsboro]\n      18 [\n        label = \"Reports excluded:\nReason1 (n = NA)\nReason2 (n = NA)\nReason3 (n = NA)\",\n        style = \"filled\",\n        width = 3.5,\n        height = 1,\n        pos = \"18.25,3.5!\",\n        tooltip = \"Reports excluded (other)\"\n      ]\n", "",prismaplot$x$diagram)
+prismaplot
+
+
+class(prismaplot)
+prisdiagram <- prismaplot$x$diagram
+print(prisdiagram)
+class(prisdiagram)
+# PRISMA_save(prismaplot,
+#             filename = "./output/PRISMA_summary-04-1.pdf",
+#             filetype = NA,
+#             overwrite = T)
+
+
+class(upd_dat$year)
+upd_dat <- upd_dat %>% mutate(year=as.numeric(year))
+rmvdrows<-anti_join(upd_dat, initial_dat, by="title")

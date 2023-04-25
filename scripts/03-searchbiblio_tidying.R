@@ -1,4 +1,19 @@
-# 1. Load relevant packages into library ----
+## HEADER---------------------------
+## Script name: 03-search bibliography tidying
+##
+## Purpose of script: tidy the deduplicated bibliography results, fill empty cells and missing data
+##
+## Author: Andrew Habrich
+##
+## Date Created: 2023-04-21
+##
+## Email: 
+## - andrhabr@gmail.com
+## - andrewhabrich@cmail.carleton.ca
+## 
+## Notes ---------------------------
+
+## 1. Load relevant packages--------
 library(tidyverse) #v2.0.0
 library(rcrossref) #v1.2.0
 library(synthesisr) #v0.3.0
@@ -6,6 +21,7 @@ library(synthesisr) #v0.3.0
 # 2. Read in the bibliographic data set ------------------------------------
 # rm(list=ls()) #remove everything in the R environment, use as needed.
 initial_dat <- read_refs(filename = "./data/deduplicated_bib-02.ris", return_df = T)
+initsource_dat <- read_refs(filename = "./data/dedup_citesource-02.ris", return_df = T)
 
 ## Let's check the structure and clean the data so that we can systematically screen
 glimpse(initial_dat) #16 columns, all 'character' format

@@ -1,4 +1,19 @@
-# 1. Load relevant packages into library -------------------------------------
+## HEADER---------------------------
+## Script name: 04-title abstract screening with metagear r package
+##
+## Purpose of script: screen titles and abstracts of the search results
+##
+## Author: Andrew Habrich
+##
+## Date Created: 2023-04-21
+##
+## Email: 
+## - andrhabr@gmail.com
+## - andrewhabrich@cmail.carleton.ca
+## 
+## Notes ---------------------------
+
+## 1. Load relevant packages--------
 ## install.packages("tidyverse","metagear","PRISMA2020","rcrossref) install packages as needed
 library(plyr) #plyr needs to be loaded BEFORE tidyverse to prevent issues with dplyr
 library(tidyverse) #v2.0.0
@@ -39,11 +54,12 @@ abstract_screener(file="./output/effort_drew1.csv",
                   keyBindingToButtons = c("q","w","e","r","t")) 
 
 # 4 Screening effort summary and visualization-----
-bibscreened<-effort_merge(directory="./output") #this will merge all effort_*reviewer*.csv files together
+#bibscreened<-effort_merge(directory="./output") #this will merge all effort_*reviewer*.csv files together
+bibscreened <- read_csv("./output/effort_drew1.csv", col_names = T)
 unique(bibscreened$INCLUDE) #how many categories are there?
 
 # generate a summary table by each decision category
-bibscreened %>% 
+screensummary_table <- bibscreened %>% 
   group_by(INCLUDE) %>% #group by category
   summarize(count=n()) %>% #summarize based on count of each category
   mutate(percentage = count/nrow(bibscreened)*100, #estimate the percentage in each category
@@ -53,17 +69,34 @@ bibscreened %>%
                              INCLUDE == "YES" ~ "Candidate studies identified",
                              INCLUDE == "REVIEW" ~ "Review/Methodology/Framework articles",
                              TRUE ~ "IN PROGRESS, not vetted yet")) %>% 
-  arrange(desc(percentage)) #arrange in descending % order
+  arrange(desc(percentage))
+write_csv(screensummary_table, file="./output/tables/init_screenres_table-02.csv")
 
-# What journals are the YES, MAYBE, and REVIEW
+# What journals are the YES, MAYBE
 bibscreened %>% 
   filter(INCLUDE=="YES" | INCLUDE=="MAYBE") %>% 
   group_by(jour_s) %>% 
   count(jour_s) %>% 
+  filter(n > 1) %>% #JOURNALS WITH MORE THAN 1 ENTRY ONLY
   ggplot(aes(x=n, y = reorder(jour_s,n))) + #reorder to descending frequency
   geom_bar(stat="identity", fill = "steelblue", color = "white") +
-  labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
+  labs(x = "Frequency", y = "Journal", title = "Frequency of records: YES or MAYBE") +
   theme(axis.text.y = element_text(size=5)) +  scale_y_discrete(labels = function(x) str_trunc(x, 35))
+
+## Stacked barplot
+bibscreened %>% 
+  filter(INCLUDE!="NOabstr" & INCLUDE!="NOtitle") %>%
+  group_by(jour_s, INCLUDE) %>%
+  summarise(count = n()) %>%
+  filter(count > 1) %>% 
+  ungroup() %>% 
+  ggplot(aes(x= count, y = reorder(jour_s,count), fill = INCLUDE)) + #reorder to descending frequency
+  geom_bar(stat="identity", position = "stack", colour="black") +
+  labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
+  theme_bw()+ #to standardize to a common theme
+  theme(axis.text.y = element_text(size = 5)) + #specific modifications to the theme
+  scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
+  scale_x_continuous(limits = c(0, 80), breaks = seq(0, 80, 5), expand=expand_scale(mult=c(0,0.1)))
 
 ## How many entries are there for the categories
 ### For entries in the YES category, #What is the maximum number of articles from 1 journal?
@@ -132,7 +165,7 @@ prismaplot <- PRISMA_flowdiagram(prisma,
                            detail_databases = T,
                            detail_registers = F)
 PRISMA_save(prismaplot,
-            filename = "./output/PRISMA_summary-04.pdf",
+            filename = "./output/figures/PRISMA_summary-04.pdf",
             filetype = NA,
             overwrite = T)
 

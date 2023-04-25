@@ -123,7 +123,8 @@ n_unique %>%
   ggplot(aes(fill=unique, x=cite_source)) + 
   geom_bar(position=position_dodge(width=0.5)) +
   xlab("") + ylab("Number of citations") +
-  geom_text(stat="count", aes(label=..count..)) + theme(axis.line = element_line(linetype = "solid"),
+  geom_text(stat="count", aes(label=..count..), size=3, check_overlap = T) + 
+  theme(axis.line = element_line(linetype = "solid"),
     panel.grid.major = element_line(linetype = "blank"),
     axis.text = element_text(size = 11, angle = 90),
     panel.background = element_rect(fill = NA),
@@ -144,12 +145,13 @@ bibs %>%
 
 # How many records per database by year?
 class(bibs$year)
-# biby<-bibs %>% filter(!is.na(year)) %>% ymd(year) #coerce to numerical year
+bibs$year <- as.numeric(bibs$year)
 bibs %>% 
   filter(cite_source %in% c("pastsearch", "scopus", "wos", "biorxiv", "proquest")) %>% 
   ggplot(aes(x = year)) +
   geom_histogram(stat="count", binwidth = 1) +
   facet_wrap(~ cite_source) +
+  xlim(1980,NA) +
   xlab("Publication year") + ylab("Records found") + theme(axis.line = element_line(linetype = "solid"),
     axis.text.x = element_text(angle = 90),
     panel.background = element_rect(fill = NA))
@@ -161,20 +163,35 @@ export_ris(unique_citations, filename = "./data/deduplicated_bib-02-2.ris", sour
 #            format = "ris", #or "bib"
 #            file = "./data/deduplicated_bib-02-21")
 
-## WIP 3.1 Save/extract info to PRISMA template #WIP -------------------
-prismainfo <-read.csv(system.file("extdata", "PRISMA.csv", package = "PRISMA2020"))
-prismainfo[13,"n"] <- nrow(import)-nrow(final_res) #number of duplicates
-prismainfo[6, "n"] <- str_c("Web of Science, ", nrow(wos), #find the number of entries per source
-                            "; SCOPUS, ", nrow(scop), 
-                            "; ProQuest, ", nrow(proq),
-                            "; bioRxiv, ", nrow(biox),
-                            "; ConservationCorridor, ", nrow(ccorg))
+## 3.1 Save/extract info to PRISMA template -------------------
+### Check how many results there were by source
+bibmeta %>% group_by(cite_source) %>% count()
+
+### read in template from the package directory
+prismainfo <- read.csv(system.file("extdata", "PRISMA.csv", package = "PRISMA2020")) #Check the dataframe to know what rows and columns to replace
+
+# Studies identified in key reviews (Beninde et al 2015, Lookingbill et al. 2022)
+prismainfo[2, "n"] <- sum(sum(bibmeta$cite_source == "beninderefs") + sum(bibmeta$cite_source == "lookingbillrefs"))
+prismainfo[2, "boxtext"] <- c("Studies from previous reviews on topic")
+prismainfo[3, "n"] <- sum(bibmeta$cite_source == "benchmark")
+prismainfo[3, "boxtext"] <- c("Benchmark inclusion studies identified")
+# Total number of entries
+prismainfo[5, "n"] <- nrow(bibmeta)
+# Find the number of entries per source
+prismainfo[6, "n"] <- str_c("Web of Science, ", sum(bibmeta$cite_source == "wos"), 
+                            "; SCOPUS, ", sum(bibmeta$cite_source == "scopus"), 
+                            "; ProQuest, ", sum(bibmeta$cite_source == "proquest"),
+                            "; bioRxiv, ", sum(bibmeta$cite_source == "biorxiv"),
+                            "; Previous screening effort, ", sum(bibmeta$cite_source == "pastsearch"))
+# Results from fwd + bwd citation chasing
+prismainfo[12, "n"] <- sum(sum(bibmeta$cite_source == "keyrevfwd") + 
+                          sum(bibmeta$cite_source == "keyrevbwd") + 
+                          sum(bibmeta$cite_source == "keyreview"))
+prismainfo[13,"n"] <- nrow(bibmeta)-6510 #number of duplicates
+
+write_csv(prismainfo, file = "./data/PRISMA_template-02-2.csv")
 
 # Extra works ----
-### COMPARE TO SCREENED
-# bibscreened<-metagear::effort_merge(directory="./output")
-# merged_df <- merge(unique_citations, bibscreened, by = "title")
-
 # bibs <- bibs %>% mutate(source = str_remove_all(source, "\\s*\\(.*\\)")) #remove all (bracketed) content
 # bibs %>% filter(source == "Biol. Conserv" | source == "Biological Conservation") %>% view # here is an example of abbreviated journal name
 # bibs %>% filter(str_detect(source, "\\.")) %>% group_by(source) %>% count() %>% arrange(desc(n))
