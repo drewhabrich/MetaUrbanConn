@@ -27,7 +27,7 @@ class(screen_dat)
 ## get "stopwords" from commonly used terms, to avoid it suggesting these as terms
 englishstopwords <- litsearchr::get_stopwords("English")
 ecologystopwords <- read_lines("./raw_data/ecologystopwords.txt")
-revstopwords <-revwords()
+revstopwords <-revtools::revwords()
 # combine into one stopword vector
 stopwords<-c(englishstopwords, ecologystopwords, revstopwords)
 
@@ -52,7 +52,7 @@ screen_topics(tm1)
 screen_topics(initial_dat, remove_words = stopwords)
 
 ### 4. Pickup on interactive model ----
-topicmap <- readRDS("./topicmap_screened_05.rds")
+topicmap <- readRDS("./6topicmap_screened_05.rds")
 screen_topics(topicmap, remove_words = stopwords)
 
 ###
