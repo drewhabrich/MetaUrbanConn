@@ -45,7 +45,7 @@ fscreen_rev %>% summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
 ### 2.0  Extract all the digital identifiers -----------------------------
 ### With just the YES for now
 di_yes <- fscreen_yes %>% select(c("database", "label", "INCLUDE", "title", "jour_s", 
-                                   "author", "doi_prv", "url_prv","doi_upd","url_upd"))
+                                   "author","year", "doi_prv", "url_prv","doi_upd","url_upd"))
 glimpse(di_yes)
 ### Combine the new and old doi/url columns
 di_yes <- di_yes %>% mutate(doi = ifelse(is.na(doi_upd), doi_prv, doi_upd)) %>% 
@@ -57,6 +57,12 @@ di_yes <- di_yes %>% mutate(url = ifelse(str_detect(url, "NA;"), NA, url))
 di_yes %>% filter(is.na(doi)) %>% count() #65
 di_yes %>% filter(is.na(url)) %>% count() #43 ##Urls for EACH of the database sources, seperated by ;
 
+####DOI TO ZOTERO####### 
+di_yes %>% filter(is.na(doi)) %>% View
+di_yes %>% filter(!is.na(doi)) %>% count()
+di_yes %>% filter(!is.na(doi)) %>% pull(doi)
+
+write_csv(di_yes, file="yes_log.csv")
 ## Download from DOI URL using 'heapsofpapers'
 # di_yes %>%
 #   filter(!is.na(doi)) %>%
@@ -105,14 +111,14 @@ my <- di_yes  %>% left_join(y %>% select(c("doi","url","url_for_pdf","url_for_la
 glimpse(my)
 ## Download from OPEN-ACCESS BEST PDF URL
 my %>%
-  filter(!is.na(oa_url)) %>%
+  filter(!is.na(url_oa)) %>%
   mutate(pdflabel = paste0(label,".pdf")) %>% tibble %>%
-  get_and_save(data = .,links = "oa_url",
+  get_and_save(data = .,links = "url_oa",
                save_names = "pdflabel",dir = "./pdfs/yes",
                delay = 10, print_every=5, dupe_strategy = "ignore")
 ## Check which pdfs have already been downloaded
 my %>%
-  filter(!is.na(oa_url)) %>%
+  filter(!is.na(url_oa)) %>%
   mutate(pdflabel = paste0(label,".pdf")) %>% tibble %>%
   check_for_existence(data = ., save_names = "pdflabel",dir = "./pdfs/yes")
 
