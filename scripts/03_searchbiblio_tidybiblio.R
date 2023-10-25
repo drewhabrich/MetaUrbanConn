@@ -6,6 +6,7 @@
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-04-21
+## Date last Modified: 2023-10-24 
 ##
 ## Email: 
 ## - andrhabr@gmail.com
@@ -20,44 +21,34 @@ library(synthesisr) #v0.3.0
 
 # 2. Read in the bibliographic data set ------------------------------------
 # rm(list=ls()) #remove everything in the R environment, use as needed.
-initial_dat <- read_refs(filename = "./data/deduplicated_bib-02.ris", return_df = T)
-initsource_dat <- read_refs(filename = "./data/dedup_citesource-02.ris", return_df = T)
+initial_dat <- read_refs(filename = "./data/02-dedup_citesource.ris", return_df = T)
 
 ## Let's check the structure and clean the data so that we can systematically screen
-glimpse(initial_dat) #16 columns, all 'character' format
+glimpse(initial_dat) #14 columns, all 'character' format
 ## How many of the columns are *mostly* empty
 initial_dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
-## Remove unnecessary columns (Keywords, notes)
-initial_dat <- initial_dat %>% select(-c(keywords,notes, publisher,end_page,issue))
-## Coerce year into numeric format
-initial_dat <- initial_dat %>% mutate(year=as.numeric(year)) %>% as_tibble() #change year to be numeric instead of character
-## Save as a seperate dataframe before any major manipulations ##
-dat<-initial_dat 
-glimpse(dat)
 
+## Tidy up columns and save as a seperate dataframe before any major manipulations
+dat <- initial_dat %>% 
+  select(-c(pubmed_id, issue, isbn, C1, start_page)) %>% #Remove unnecessary columns (Keywords, notes)
+  mutate(year=as.numeric(year)) %>% # Coerce year into numeric format
+  as_tibble()
+  
 ## 2.1. Tidy the dataframe and fill empty cells ----
 ## Currently there are empty cells in these columns:
-dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% select(!c("source_type","start_page")) %>% as_tibble())
+dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
 
 ### 2.1.1. Fill Journal information
-### Fill empty cells in the "journal" column with the corresponding values from the "source" column (ProQuest/SCOPUS artifact). 
-dat <- dat %>% mutate(journal = if_else(is.na(journal), source, journal)) #if 'journal' is empty, fill with 'source'
-### Fill the last remaining empty 'journals' with the source type if it is not a journal (e.g. report, book, or conference paper)
-dat <- dat %>% mutate(journal = if_else(is.na(journal), source_type, journal),
-                        author = if_else(is.na(author),"MISSING", author)) #
-### Force journal names to title-case 
-dat <- dat %>% 
-  mutate(journal = str_replace_all(journal, "&", "and")) %>% 
-  mutate(jour_s = str_to_lower(journal)) %>% #create modified column
-  mutate(jour_s = str_to_title(jour_s)) %>% #coerce to title-case
-  mutate(jour_s = str_replace_all(jour_s, "\\b(And|In|Of|The|For)\\b", str_to_lower)) #conjunctions to lowercase
+## Fill the last remaining empty 'journals' with the source type if it is not a journal (e.g. report, book, or conference paper)
+dat <- dat %>% mutate(journal = if_else(is.na(journal), "MISSING", journal),
+                      author = if_else(is.na(author), "MISSING", author)) #
 
 ### 2.1.2  Fill any missing 'year' data 
 ### Fill missing years based on DOI
-year_doi <- dat %>% filter(is.na(year)) %>% select(doi, title, url) #filter only the entries with missing year
-year_doi <- cr_works(dois = year_doi$doi)$data #extract data from crossref based on  year
-glimpse(year_doi)
-year_doi$year <- year(ymd(year_doi$published.online)) #classify as date and extract the year
+year_doi <- dat %>% filter(is.na(year)) %>% 
+  select(doi, title, url) %>% 
+  as_tibble(cr_works(dois = year_doi$doi)$data, .name_repair = "check_unique") %>% 
+  mutate(year = year(ymd(.$published.online)))
 
 ### Join dataframes by doi and remove the redundant year and url columns
 dat <- dat %>%
@@ -68,7 +59,7 @@ dat <- dat %>%
   relocate(year, .after = author) %>% relocate(url, .after = doi)
 
 # *How many empty cells are still left?* 
-dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% select(!c("source_type","start_page")) %>% as_tibble())
+dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
 
 ## 2.2. Retrieve missing digital identifiers (DOI and URLs) ----
 ## Is there a pattern to which entries are missing DOI? Or URLS?
@@ -80,15 +71,13 @@ dat %>% filter(is.na(doi)) %>% ggplot(aes(x = year)) +
   theme_bw()
 
 # what journals?
-dat %>% filter(is.na(doi)) %>% group_by(jour_s) %>% count(jour_s) %>% 
-  ggplot(aes(y = reorder(jour_s, n), x=n)) + #reorder the y-axis by the n column (frequency)
+dat %>% filter(is.na(doi)) %>% group_by(journal) %>% count(journal) %>% 
+  ggplot(aes(y = reorder(journal, n), x=n)) + #reorder the y-axis by the n column (frequency)
   geom_bar(stat="identity", fill = "steelblue", color = "white") +
   labs(x = "Frequency", y = "Journal name", title = "Search results with missing DOI by Journal") +
   theme_bw() +
   theme(axis.text.y = element_text(size = 5)) + 
   scale_y_discrete(labels = function(x) str_trunc(x, 50))
-
-# dat %>% filter(is.na(doi)) %>% view
 
 ### 2.2.2 URL MISSING
 # what years?
@@ -100,8 +89,8 @@ dat %>% filter(is.na(url)) %>% ggplot(aes(x = year)) +
 dat %>% filter(is.na(url)) %>% filter(year=="2022") %>% tibble
 
 # what journals?
-dat %>% filter(is.na(url)) %>% group_by(jour_s) %>% count(jour_s) %>% 
-  ggplot(aes(y = reorder(jour_s, n), x=n)) + #reorder the y-axis by the n column (frequency)
+dat %>% filter(is.na(url)) %>% group_by(journal) %>% count(journal) %>% 
+  ggplot(aes(y = reorder(journal, n), x=n)) + #reorder the y-axis by the n column (frequency)
   geom_bar(stat="identity", fill = "steelblue", color = "white") +
   labs(x = "Frequency", y = "Journal name", title = "Search results with missing URL by Journal") +
   theme_bw() +
@@ -114,8 +103,8 @@ dat$num_authors <- sapply(strsplit(dat$author, ";\\s*|\\s+and\\s+"), length)
 #### create label column in the format: Author_year_journal
 dat <- dat %>%
   mutate(label = ifelse(num_authors > 2,#condition
-                        str_c(word(author, 1, sep = ", "),"et_al", year, str_replace_all(jour_s, " ", ""),sep = "_"),#if condition is met
-                        str_c(word(author, 1, sep = ", "), year, str_replace_all(jour_s, " ", ""), sep = "_" #else use this
+                        str_c(word(author, 1, sep = ", "),"et_al", year, str_replace_all(journal, " ", ""),sep = "_"),#if condition is met
+                        str_c(word(author, 1, sep = ", "), year, str_replace_all(journal, " ", ""), sep = "_" #else use this
                         )) 
   ) %>%  
   mutate(label = str_trunc(label, width = 50, side = c("right"), ellipsis = "")) %>%
@@ -123,7 +112,6 @@ dat <- dat %>%
 
 # 3. Bibliography data exploration ----------
 ## check the data structure
-glimpse(dat)
 dat %>% summarise(across(everything(), ~ sum(is.na(.)))) #Columns with # of NAs 
 
 # How many publications by year are there?
@@ -144,8 +132,8 @@ dat %>% summarise(mean_numauth=mean(num_authors),
                   max_numauth=max(num_authors)) #the entry with the max # of authors is a dataset publication with 199 people!
 
 # How many journals are entries published in?
-n_distinct(dat$jour_s) #distinct journal entries (this only matches on EXACT)
+n_distinct(dat$journal) #distinct journal entries (this only matches on EXACT)
 
 # Save the cleaned bibliographic dataframe to .csv for screening
 clean_dat <- dat
-write_csv(clean_dat, "./data/clean_bibliography-03.csv", col_names = T)
+write_csv(clean_dat, "./data/03-clean_bibliography.csv", col_names = T)

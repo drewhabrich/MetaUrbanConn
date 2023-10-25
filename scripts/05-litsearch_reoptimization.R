@@ -7,12 +7,13 @@
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-03-29
+## Date last Modified: 2023-10-25 
 ##
 ## Email: 
 ## - andrhabr@gmail.com
 ## - andrewhabrich@cmail.carleton.ca
 
-# 1. Literature search preparation -------------------------------------------
+## 1. Literature search preparation -------------------------------------------
 #remotes::install_github("rmetaverse/metaverse") #this installs a whole set of meta-analysis related R packages, https://rmetaverse.github.io/
 library(tidyverse) #v2.0.0
 library(synthesisr) #v0.3.0
@@ -25,10 +26,10 @@ englishstopwords <- litsearchr::get_stopwords("English")
 ecologystopwords <- read_lines("./raw_data/ecologystopwords.txt")
 stopwords <- unique(append(englishstopwords,ecologystopwords))
 
-# 2. Reinforming search strategy ---- 
+## 2. Reinforming search strategy ---- 
 ## with Ti/Ab screened results from the previous search string.
 ## Read in the csv of screened results
-bibscreened<-read_csv("./output/effort_drew.csv")
+bibscreened<-read_csv("./data/effort_drew_04.csv")
 glimpse(bibscreened)
 ## Randomly select 100 entries in the "YES" and "MAYBE" with abstract and DOI
 set.seed(888) #set seed for reproducibility 
@@ -37,13 +38,13 @@ bs_subset <- bibscreened %>%
   filter(!is.na(title) & !is.na(abstract)) %>%  
   sample_n(100)
 
-# 3. read in the collected datasets ----
+## 3. read in the collected datasets ----
 ## This includes: 19 benchmark articles, a random subset of 100 screened articles, 
 ## 6 key connectivity reviews, and the forward and backward citations from those reviews.
-res <- import_results(directory="raw_data/search_optimization")
+res <- import_results(directory="raw_data/05-search_optimization")
 glimpse(res)
 
-## 3.1 subset of screened articles terms ----
+### 3.1 subset of screened articles terms ----
 bs_titleterms <- extract_terms(bs_subset$title,
                           method = "fakerake", #using a modified RAPID AUTOMATIC KEYWORD EXTRACTION
                           ngrams = T, 
@@ -58,7 +59,8 @@ bs_abstrterms <-extract_terms(bs_subset$abstract,
                           min_n = 2, # minimum number of words per term
                           stopwords = stopwords)
 bs_abstrterms
-## 3.2 benchmark and review articles terms ----
+
+### 3.2 benchmark and review articles terms ----
 ### We can be more restrictive on how frequently the terms need to come up for inclusion, since there more entries here.
 res_titleterms<-extract_terms(res$title,
                           method = "fakerake", #using a modified RAPID AUTOMATIC KEYWORD EXTRACTION
@@ -90,7 +92,7 @@ remove_terms <- c("atlantic forest", "complex landscapes", "european cities", "g
 ### remove from the final set of terms to generate the network from
 terms <- terms[!terms %in% c(remove_terms)]
 
-# 4. Network analysis and keyword pruning ------
+## 4. Network analysis and keyword pruning ------
 fulldoc <- paste(res[, "title"], res[, "abstract"]) #bind the title and abstract text
 docfmatrix <- create_dfm(elements=fulldoc, features=terms) #create the document matrix
 bib_network<- create_network(docfmatrix, min_studies=5, min_occ = 5) #create a network of terms used by the records
@@ -139,12 +141,12 @@ ggplot(term_str, aes(x=rank, y=strength, label=term)) +
 ###' The first cutoff point is similar to the 75% retention, so let's try that.
 selected_terms <- get_keywords(reduce_graph(bib_network, 
                           find_cutoff(bib_network, method="cumulative", percent=0.75))) 
-write.csv(selected_terms, "./output/search_terms-01-1.csv")
+write.csv(selected_terms, "./output/05-search_terms.csv")
 
-## 4.1 Grouping keywords according to a PICO framework ----
+### 4.1 Grouping keywords according to a PICO framework ----
 ### These terms will be used to write a new 'refined' search string 
 ### NOTE excluding fish/non-terrestrial
-grouped_terms <- read.csv("./output/grouped_terms-01-1.csv")
+grouped_terms <- read.csv("./output/05-grouped_terms.csv")
 glimpse(grouped_terms)
 
 ### Extract the terms for each group from the csv into a list
@@ -193,16 +195,16 @@ stemmedterms <- list(
 )
 
 # write search strings
-litsearchr::write_search(
-  cleanterms,
-  languages = "English", 
-  exactphrase = T,
-  stemming = T,
-  closure = "none",
-  directory= "./output/upd_exactfull_string01-1", 
-  writesearch = F,
-  verbose = T
-)
+# litsearchr::write_search(
+#   cleanterms,
+#   languages = "English", 
+#   exactphrase = T,
+#   stemming = T,
+#   closure = "none",
+#   directory= "./output/upd_exactfull_string01-1", 
+#   writesearch = F,
+#   verbose = T
+# )
 
 litsearchr::write_search(
   stemmedterms,
@@ -210,7 +212,7 @@ litsearchr::write_search(
   exactphrase = T,
   stemming = F,
   closure = "full",
-  directory= "./output/manualstem_exactfull_string01-1", 
+  directory= "./output/05-manualstem_exactfull_string", 
   writesearch = T,
   verbose = T
 )
