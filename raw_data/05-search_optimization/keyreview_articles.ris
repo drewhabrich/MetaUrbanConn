@@ -1,0 +1,102 @@
+
+
+
+TY  - JOUR
+AU  - Lookingbill, Todd R.; Minor, Emily S.; Mullis, Charles S.; Nunez-Mir, Gabriela C.; Johnson, Philip
+TI  - Connectivity in the Urban Landscape (2015–2020): Who? Where? What? When? Why? and How?
+PY  - 2022
+AB  - NA
+SP  - 1
+EP  - 14
+JF  - Current Landscape Ecology Reports
+VL  - 7
+IS  - 1
+PB  - Springer Science and Business Media LLC
+DO  - 10.1007/s40823-021-00068-x
+ER  - 
+
+
+TY  - JOUR
+AU  - Ayram, Camilo A. Correa; Mendoza, Manuel E.; Etter, Andrés; Salicrup, Diego R. Pérez
+TI  - Habitat connectivity in biodiversity conservation: A review of recent studies and applications
+PY  - 2015
+AB  - The study of landscape connectivity in conservation has increased considerably since the early part of the 21st century. While the implications of landscape connectivity are self-evident for conservation, they are also important for physical geography since a proper understanding of landscape patterns and processes allows for better landscape management practices, which are at the core of geography. This paper presents a review of the literature based on 162 publications from 2000 to 2013, in which we evaluated the current state and recent advances in the integration of landscape connectivity in the identification and planning of conservation areas. The literature review and data analysis were based on a database organized into five categories: General information, study areas, research objectives, research methods in connectivity studies, and integration of connectivity with conservation. We found a substantial increase in the number of publications relating to connectivity and conservation from 2008 to ...
+SP  - 7
+EP  - 37
+JF  - Progress in Physical Geography: Earth and Environment
+VL  - 40
+IS  - 1
+PB  - SAGE Publications
+DO  - 10.1177/0309133315598713
+ER  - 
+
+
+TY  - JOUR
+AU  - Kindlmann, Pavel; Burel, Françoise
+TI  - Connectivity measures: a review
+PY  - 2008
+AB  - One of the central problems in contemporary ecology and conservation biology is the drastic change of landscapes induced by anthropogenic activities, resulting in habitat loss and fragmentation. For many wild living species, local extinctions of fragmented populations are common and recolonization is critical for regional survival. Successful recolonization depends on the availability of dispersing individuals and the degree of landscape connectivity. The obvious implications of landscape connectivity for conservation biology have led to a proliferation of connectivity measures. However, general relationships between landscape connectivity and landscape structure are lacking, and so are the relationships between different connectivity metrics. Consequently, there is a need to develop landscape metrics that more accurately characterize the landscape with an emphasis on the underlying processes. Here we review various definitions of landscape connectivity, explain their mathematical connotations, and make some unifying conclusions and suggestions for future research.
+SP  - 879
+EP  - 890
+JF  - Landscape Ecology
+VL  - 23
+IS  - 8
+PB  - Springer Science and Business Media LLC
+DO  - 10.1007/s10980-008-9245-4
+ER  - 
+
+
+TY  - JOUR
+AU  - LaPoint, Scott D.; Balkenhol, Niko; Hale, James D.; Sadler, Jonathan P.; van der Ree, Rodney
+TI  - Ecological connectivity research in urban areas
+PY  - 2015
+AB  - Summary The successful movement of individuals is fundamental to life. Facilitating these movements by promoting ecological connectivity has become a central theme in ecology and conservation. Urban areas contain more than half of the world's human population, and their potential to support biodiversity and to connect their citizens to nature is increasingly recognized. Promoting ecological connectivity within these areas is essential to reaching this potential. However, our current understanding of ecological connectivity within urban areas appears limited. We reviewed the published scientific literature to assess the state-of-the-art of ecological connectivity research in urban areas, summarized trends in study attributes and highlighted knowledge gaps. We found 174 papers that investigated ecological connectivity within urban areas. These papers addressed either structural (48) or functional connectivity (111), and some addressed both (15), but contained substantial geographic and taxonomic biases. These papers rarely defined the aspect of connectivity they were investigating and objective descriptions of the local urban context were uncommon. Formulated hypotheses or a priori predictions were typically unstated and many papers used suboptimal study designs and methods. We suggest future studies explicitly consider and quantify the landscape within their analyses and make greater use of available and rapidly developing tools and methods for measuring functional connectivity (e.g. biotelemetry or landscape genetics). We also highlight the need for studies to clearly define how the terms ‘urban’ and ‘connectivity’ have been applied. Knowledge gaps in ecological connectivity in urban areas remain, partly because the field is still in its infancy and partly because we must better capitalize on the state-of-the-art technological and analytical techniques that are increasingly available. Well-designed studies that employed high-resolution data and powerful analytical techniques highlight our abilities to quantify ecological connectivity in urban areas. These studies are exemplary, setting the standards for future research to facilitate data-driven and evidence-based biodiversity-friendly infrastructure planning in urban areas.
+SP  - 868
+EP  - 878
+JF  - Functional Ecology
+VL  - 29
+IS  - 7
+PB  - Wiley
+DO  - 10.1111/1365-2435.12489
+ER  - 
+
+
+TY  - JOUR
+AU  - Beninde, Joscha; Veith, Michael; Hochkirch, Axel
+TI  - Biodiversity in cities needs space: a meta-analysis of factors determining intra-urban biodiversity variation
+PY  - 2015
+AB  - Understanding varying levels of biodiversity within cities is pivotal to protect it in the face of global urbanisation. In the early stages of urban ecology studies on intra-urban biodiversity focused on the urban–rural gradient, representing a broad generalisation of features of the urban landscape. Increasingly, studies classify the urban landscape in more detail, quantifying separately the effects of individual urban features on biodiversity levels. However, while separate factors influencing biodiversity variation among cities worldwide have recently been analysed, a global analysis on the factors influencing biodiversity levels within cities is still lacking. We here present the first meta-analysis on intra-urban biodiversity variation across a large variety of taxonomic groups of 75 cities worldwide. Our results show that patch area and corridors have the strongest positive effects on biodiversity, complemented by vegetation structure. Local, biotic and management habitat variables were significantly more important than landscape, abiotic or design variables. Large sites greater than 50 ha are necessary to prevent a rapid loss of area-sensitive species. This indicates that, despite positive impacts of biodiversity-friendly management, increasing the area of habitat patches and creating a network of corridors is the most important strategy to maintain high levels of urban biodiversity.
+SP  - 581
+EP  - 592
+JF  - Ecology letters
+VL  - 18
+IS  - 6
+PB  - Wiley-Blackwell
+DO  - 10.1111/ele.12427
+ER  - 
+
+
+TY  - JOUR
+AU  - Keeley, Annika T. H.; Beier, Paul; Jenness, Jeffrey S.
+TI  - Connectivity metrics for conservation planning and monitoring
+PY  - 2021
+AB  - Abstract Conservation plans increasingly include goals to maintain a connected network. For example, planners might design a linkage between two conserved areas, or the parties to the Convention on Biological Diversity might set targets for a well-connected system of protected areas for each nation. Here we describe 35 metrics that can quantify connectivity of focal patches or of networks and monitor changes over time in an ecoscape (landscape or seascape). The connectivity metrics fall into four categories: (1) structural connectivity metrics derived from binary maps and species-nonspecific spatial functions, (2) connectivity metrics derived from binary maps and species-specific population sizes and dispersal functions (3) metrics derived from multi-state maps and species responses to those states, and (4) metrics of functional connectivity reflecting observed flow of organisms or genes. We provide a decision tree to select which of these metrics are most appropriate for a given conservation goal and broad ecoscape context. Functional connectivity metrics may be preferred if conservation is focused on particular species or if data are available to parameterize models for a suite of species that represent needs of the focal biota. However, with climate change, ecoscapes need to facilitate movements of all species that need to adapt by shifting their ranges. Because an intact network of relatively natural areas may support movement for many species, structural metrics that consider the human footprint should be used in all coarse filter approximations of functional connectivity in shared ecoscapes.
+SP  - 109008
+EP  - NA
+JF  - Biological Conservation
+VL  - 255
+IS  - NA
+PB  - Elsevier BV
+DO  - 10.1016/j.biocon.2021.109008
+ER  - 
+
+
+
+
+
+
+
+
+
+
+
