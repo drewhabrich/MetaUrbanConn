@@ -34,19 +34,19 @@ file_path <- "./raw_data/06-upd_search/"
 # create the metadata tibble to match with the .ris files
 metadata_tbl <- tibble::tribble(
   ~files,                     ~cite_sources,     ~cite_labels, 
-  "benchmark_articles.ris",   "benchmark",       "benchmark",    
-  "manualstem_wos1.ris",      "wos",             "wos1",    
-  "manualstem_wos2.ris",      "wos",             "wos2",    
-  "manualstem_wos3.ris",      "wos",             "wos3",     
-  "manualstem_scopus1.ris",   "scopus",          "scop",    
-  "manualstem_proqgrey1.RIS", "proquest",        "proq",    
-  "keyreview_articles.ris",   "keyreview",       "revs",    
-  "keyreview_bwd.ris",        "keyrevbwd",       "rbwd",  
-  "keyreview_fwd.ris",        "keyrevfwd",       "rfwd",    
-  "bioRxiv.ris",              "biorxiv",         "biox",
-  "beninde2015refs.ris",      "beninderefs",     "beninde",
-  "lookingbill2022refs.ris",  "lookingbillrefs", "lookingb",
-  "02-dedup_citesource.ris",  "pastsearch",      "dedup"
+  "benchmark_articles.ris",   "Benchmark",       "benchmark",    
+  "manualstem_wos1.ris",      "WoS",             "wos1",    
+  "manualstem_wos2.ris",      "WoS",             "wos2",    
+  "manualstem_wos3.ris",      "WoS",             "wos3",     
+  "manualstem_scopus1.ris",   "SCOPUS",          "scop",    
+  "manualstem_proqgrey1.RIS", "ProQuest",        "proq",    
+  "keyreview_articles.ris",   "Lapoint2015refs",       "revs",    
+  "keyreview_bwd.ris",        "KeyBwd Citations",       "rbwd",  
+  "keyreview_fwd.ris",        "KeyFwd Citations",       "rfwd",    
+  "bioRxiv.ris",              "bioRxiv",         "biox",
+  "beninde2015refs.ris",      "Beninde2015refs",     "beninde",
+  "lookingbill2022refs.ris",  "Lookingbill2022refs", "lookingb",
+  "02-dedup_citesource.ris",  "Initial search",      "dedup"
 ) %>% 
   # Append the file path to each file name in the 'files' column
   dplyr::mutate(files = paste0(file_path, files))
@@ -59,7 +59,6 @@ bibmeta %>% group_by(cite_source) %>% summarise(across(everything(), ~ sum(is.na
 # check the dataframe and remove useless columns
 ### 2.1 Tidying ----
 bibs <- bibmeta 
-glimpse(bibs)
 
 ## How many unique entries are there in columns, and what are they?
 #bibs %>% select(c("source_type","cite_source","cite_label","database","document_type")) %>%
@@ -136,14 +135,29 @@ bibs %>%
 class(bibs$year)
 bibs$year <- as.numeric(bibs$year)
 bibs %>% 
-  filter(cite_source %in% c("pastsearch", "scopus", "wos", "biorxiv", "proquest")) %>% 
+  filter(cite_source %in% c("Initial search", "SCOPUS", "WoS", "bioRxiv", "ProQuest")) %>% 
   ggplot(aes(x = year)) +
   geom_histogram(stat="count", binwidth = 1) +
   facet_wrap(~ cite_source) +
   xlim(1980,NA) +
   xlab("Publication year") + ylab("Records found") + theme(axis.line = element_line(linetype = "solid"),
-    axis.text.x = element_text(angle = 90),
+    axis.text.x = element_text(angle = 45),
     panel.background = element_rect(fill = NA))
+
+bibs %>%
+  filter(cite_source %in% c("bioRxiv", "Initial search", "ProQuest", "SCOPUS", "WoS")) %>%
+  ggplot() +
+  aes(x = year) +
+  geom_histogram(stat="count", binwidth = 1, fill = "#112446") +
+  labs(x = "Publication year",
+       y = "Records found",
+       title = "Unique records by database") +
+  theme_bw() +
+  theme(axis.line = element_line(linetype = "solid"),
+        axis.text.x = element_text(angle = 90, vjust = 0.5),
+        panel.background = element_rect(fill = NA)) + 
+  facet_wrap(vars(cite_source))
+
 
 ## Export for further analysis
 export_ris(unique_citations, filename = "./data/06-dedup_updsearch.ris", source_field = "DB", label_field = "N1")
