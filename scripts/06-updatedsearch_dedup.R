@@ -27,7 +27,6 @@ library(CiteSource)
 # 2. Import files from multiple sources ----
 # what files are in the folder?
 citation_files <- list.files(path = "./raw_data/06-upd_search", full.names = TRUE)
-citation_files
 
 # identify the filepath to the files to match with source meta-data
 file_path <- "./raw_data/06-upd_search/"
@@ -80,6 +79,8 @@ bibs <- bibs %>%
 
 ## How many columns have empty cells NOW?
 bibs %>% group_by(cite_source) %>% summarise(across(everything(), ~ sum(is.na(.)))) %>% as.data.frame(.)
+bibs %>% count(journal, name = "entry_count") %>% arrange(desc(entry_count))
+
 ### let's inspect the columns missing data
 bibs %>% filter(is.na(journal)) %>% tibble()
 bibs %>% filter(is.na(author)) %>% tibble()
@@ -120,15 +121,26 @@ n_unique %>%
     legend.position = c(0.15, 0.85)) +labs(x = NULL, y = "Number of records")
 
 # What journals/sources are these entries in?
-bibs %>% 
-  filter(cite_source != "pastsearch") %>% #exclude results from past search
-  group_by(source) %>% 
-  count(source) %>% filter(n > 10) %>% 
-  ggplot(aes(x=n, y = reorder(source,n))) + #reorder to descending frequency
+unique_citations %>% summarise(across(everything(), ~ sum(is.na(.)))) %>% as.data.frame(.)
+
+uq <- unique_citations %>% 
+  mutate(journal = str_replace_all(journal, "&", "and")) %>% 
+  mutate(journal = str_to_lower(journal)) %>% #create modified column
+  mutate(journal = str_to_title(journal)) %>% #coerce to title-case
+  mutate(journal = str_replace_all(journal, "\\b(And|In|Of|The|For)\\b", str_to_lower)) 
+
+uq %>% 
+  filter(journal != "") %>% 
+  mutate(journal = if_else(journal == "Scopus1st", "Book/Other", journal)) %>% 
+  group_by(journal) %>% 
+  count(journal) %>% filter(n > 15) %>% 
+  ggplot(aes(x=n, y = reorder(journal,n))) + #reorder to descending frequency
   geom_bar(stat="identity", fill = "steelblue", color = "white") +
   labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
-  theme(axis.text.y = element_text(size=6)) +  scale_y_discrete(labels = function(x) str_trunc(x, 35)) + theme(axis.line = element_line(linetype = "solid"),
-    panel.grid.major = element_line(linetype = "dashed"),
+  theme_bw() +  
+  scale_y_discrete(labels = function(x) str_trunc(x, 30)) + 
+  theme(axis.text.y = element_text(size = 8),
+    axis.line = element_line(linetype = "solid"),
     panel.background = element_rect(fill = NA))
 
 # How many records per database by year?

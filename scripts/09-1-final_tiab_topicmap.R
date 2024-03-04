@@ -8,7 +8,7 @@
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-04-20
-## Date last Modified: 2023-10-26
+## Date last Modified: 2023-12-20
 ##
 ## Email: 
 ## - andrhabr@gmail.com
@@ -17,14 +17,16 @@
 ## Notes ---------------------------
 
 # 1. Load relevant packages--------
-library(tidyverse) #v1.3.2
-library(revtools) #v0.4.1
+library(tidyverse) 
+library(revtools) 
+installed.packages()[names(sessionInfo()$otherPkgs), "Version"]
 
 # 2. Read in the bibliographic data set ------------------------------------
 # rm(list=ls()) #remove everything in the R environment, use as needed.
-clean_dat <- read_csv("./data/clean_bibliography-03-1.csv")
-screen_dat <- read_bibliography("./data/final_tiab_screening-04-1.csv") #keep to class bibliography
-class(screen_dat)
+# clean_dat <- read_csv("./data/03-clean_bibliography.csv")
+yes_dat <- read_bibliography("./data/08-final_tiab_screening.csv") #keep to class bibliography
+
+yes_screened <- read_csv("./raw_data/10-full_screening/fullscreen_yes_results.csv")
 ## get "stopwords" from commonly used terms, to avoid it suggesting these as terms
 englishstopwords <- litsearchr::get_stopwords("English")
 ecologystopwords <- read_lines("./raw_data/ecologystopwords.txt")
@@ -34,13 +36,12 @@ stopwords<-c(englishstopwords, ecologystopwords, revstopwords)
 
 # 3. Generate topic models to visualize concept groups ---------
 ## Via shiny app to interactively designate the models
-topic_dat <- screen_dat %>% filter(include == "YES" | include == "MAYBE")
-## Using only YES and MAYBE
-td <- topic_dat
-class(td)
+topic_dat <- yes_screened %>% filter(excl_reason == "na")
+as_tibble(topic_dat)
+
 td <- as.bibliography(topic_dat)
 ## 3.1 Interactive GUI method ----
-screen_topics(td, remove_words = stopwords) 
+screen_topics(as.data.frame(topic_dat), remove_words = stopwords) 
 
 ## 3.2 Manual method ----
 dtm1 <- make_dtm(topic_dat$title, stop_words = stopwords,
