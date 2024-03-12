@@ -44,9 +44,10 @@ ggscatter(Howes_2021_tablS1, y = "SR", x = "correlationlength") + stat_cor(metho
 correlation(Howes_2021_tablS1, method = "pearson")
 
 ## CORTESARZOLA 2021
-CortesArzola_2021_tabl1<-read_csv("./raw_figextraction/suppls/Cortes-Arzola_2021_tabl1.csv") %>% select(-"site")
-ggscatter(CortesArzola_2021_tabl1, y = "SR", x = "ENN_m") + stat_cor(method = "pearson")
-correlation(CortesArzola_2021_tabl1, method = "pearson")
+CortesArzola_2021_tabl1<-read_csv("./raw_figextraction/suppls/CortesArzola2021_tabl1.csv") %>% select(-"site") %>% 
+  mutate(sr_avg = SR/transects, ab_avg = abundance/transects, taxa_avg = taxa_n/transects)
+ggscatter(CortesArzola_2021_tabl1, y = "sr_avg", x = "ENN_m") + stat_cor(method = "pearson")
+correlation(data = CortesArzola_2021_tabl1[,1:4], data2 = CortesArzola_2021_tabl1[,11:13], method = "pearson")
 
 ## TAN 2021
 Tan_2021_tabl1<-read_csv("./raw_figextraction/suppls/Tan_2021_tabl1.csv") %>% select(-c("name","noise","ExpSR","Park")) %>% relocate("nested_rank", .before = "area")
@@ -143,3 +144,15 @@ hist(l22$avg_Bray)
 vh2008 <- readxl::read_excel("./raw_figextraction/suppls/Vanheezik2008raw.xlsx")
 a<-vh2008 %>% group_by(class) %>% 
   correlation(select = c("S","Diversity"), select2 = c("ENN", "prop_vegbuffer"), method = "spearman")
+
+### Manual test statistics ####
+## testing values from Magle and Crook 2009
+esc::esc_chisq(chisq = 23.03, totaln = 92, es.type = "r") #ti val, hanski metric
+esc::esc_chisq(chisq = 3.50, totaln = 92, es.type = "r") #proportion other colonies
+
+#fitzgibbon 2007
+esc::esc_chisq(chisq = 20.95, totaln = 68, es.type = "r") 
+
+## MacDougall 2011
+effectsize::F_to_r(18.24,1,39)
+effectsize::F_to_r(7.14,1,33)
