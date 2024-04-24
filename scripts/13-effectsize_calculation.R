@@ -6,14 +6,14 @@
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2024-02-22
-## Date last Modified: 2024-03-11
+## Date last Modified: 2024-04-11
 ##
 ## Email: 
 ## - andrhabr@gmail.com
 ## - andrewhabrich@cmail.carleton.ca
 ## 
 ## Notes ---------------------------
-# currently for data for 95 scientific articles
+# currently for data for 129 scientific articles
 
 ## 1. Load relevant packages---------------------------------------------------
 ### for stats
@@ -32,14 +32,18 @@ library(Hmisc)
 ## 2. Read in data-------------------------------------------------------------
 rm(list = ls()) #clear environment before loading raw data
 raw_es_df <- read_csv("./raw_data/13-effectsize_calculations/literature_extracted_rawdata.csv", na = "na") 
+glimpse(raw_es_df)
+
+#unique values in response column
+unique(raw_es_df$r_metric)
+unique(raw_es_df$r_method)
+unique(raw_es_df$Conn_feat)
 
 ## clean up some variables
 raw_es_df$ri <- as.numeric(raw_es_df$ri) #coerce to numeric
 raw_es_df$Study_no <- as.character(raw_es_df$Study_no) #coerce to character
 raw_es_df$r_metric <- ifelse(str_detect(raw_es_df$r_metric, "^genetic"), "genetic dist.", raw_es_df$r_metric)
-raw_es_df$r_metric <- ifelse(str_detect(raw_es_df$r_metric, "occupancy"), "occurrence", raw_es_df$r_metric)
-raw_es_df$r_metric <- ifelse(str_detect(raw_es_df$r_metric, "^log\\((.+)\\)$"), 
-                             str_replace(raw_es_df$r_metric, "^log\\((.+)\\)$", "\\1"), raw_es_df$r_metric)
+
 ## create an IDlabel
 raw_es_df <- raw_es_df %>% 
   mutate(studyID = str_c(FirstAuth, Pub_year, Study_no, sep = "_")) %>% #concatenate the strings into 1 label
@@ -143,7 +147,7 @@ raw_es_df %>%
 
 ### 3.3 Response metrics ----
 ## quick and dirty with DataExplorer
-plot_bar(raw_es_df[,21:23], ggtheme = theme_bw())
+plot_bar(raw_es_df[,20:24], ggtheme = theme_bw())
 
 ### Number of effect sizes per response metric 
 raw_es_df %>% group_by(r_metric) %>% tally() %>% 
@@ -167,7 +171,8 @@ mantel_es <- raw_es_df %>% filter(corr_type == "mantel")
 regression_es <- raw_es_df %>% filter(corr_type == "regression")
 glm_es <- raw_es_df %>% filter(corr_type == "glm-poisson" | 
                                corr_type == "glm-beta" |
-                               corr_type == "glm-negativebinomial") %>% filter(is.na(mi))
+                               corr_type == "glm-negativebinomial" |
+                               corr_type == "glm-normal" ) %>% filter(is.na(mi))
 
 ### 4.1 Correlations coefficients - Calculate effect sizes and convert to fisher's Z
 es_p <- escalc(measure = "ZCOR", ri = ri, ni = ni, data = pearson_es)
@@ -181,31 +186,40 @@ OR_es <- raw_es_df %>% filter(corr_type == "glm-OR" | corr_type == "glm-RR")
 OR_es <- OR_es %>% mutate(ri = oddsratio_to_r(OR_es$bi, ni = OR_es$ni)) #convert to r
 es_OR <- escalc(measure = "ZPCOR", mi = mi, ri = ri, ni = ni, data = OR_es)
 
-logis_es <- raw_es_df %>% filter(corr_type == "glm-logistic")
+logis_es <- raw_es_df %>% filter(corr_type == "glm-logistic" | 
+                                 corr_type == "glm-binomial")
 logis_es <- logis_es %>% mutate(ri = logoddsratio_to_r(logis_es$bi, ni = logis_es$ni)) #convert to r
 
 es_logis <- escalc(measure = "ZCOR", ri = ri, ni = ni, data = logis_es, subset = is.na(mi)) #subset to remove NAs
 es_plogis <- escalc(measure = "ZPCOR", mi = mi, ri = ri, ni = ni, data = logis_es, subset = !is.na(mi)) #partial correlations for multivariate models
 
 ### 4.3 Partial correlations - Calculate effect sizes and convert to fisher's Z
-es_partial <- raw_es_df %>% filter(!is.na(mi) & corr_type %nin% c("lmm", "glmm")) %>% #remove lmm and glmm temporarily
-  filter(corr_type == "glm-poisson" | 
-           corr_type == "glm-beta" |
-           corr_type == "glm-negativebinomial") %>% 
-  filter(!is.na(ti))
+es_partial <- raw_es_df %>% filter(!is.na(mi) & corr_type %nin% c("lmm", "glmm", "glm-logistic", "glm-binomial")) %>% 
+  filter(!is.na(ti)) 
 ### calculate partial correlation effect sizes
 partial_es <- escalc(measure = "ZPCOR", mi = mi, ti = ti, ni = ni, data = es_partial)
+pcor_es <- raw_es_df %>% filter(corr_type == "partial correlation") %>% 
+  escalc(measure = "ZPCOR", mi = mi, ri = ri, ni = ni, pi = pi, data = .)
+
+### misc other effects
+o_es <- raw_es_df %>% filter(corr_type == "biserial correlation") %>% escalc(measure = "ZCOR", ri = ri, ni = ni, data = .) 
 
 ### 4.4. Combine into one dataframe 
-es_dat <- bind_rows(es_p, es_s, es_m, es_reg, es_glm, es_OR, es_logis, es_plogis, partial_es)
-es_dat <- es_dat %>% mutate(rcorr_type = ifelse(is.na(mi), "full", "part")) #add a column for partial or full
+es_dat <- bind_rows(es_p, es_s, es_m, es_reg, es_glm, es_OR, es_logis, es_plogis, partial_es, pcor_es, o_es)
+es_dat <- es_dat %>% mutate(rcorr_type = ifelse(is.na(mi), "full", "part")) %>% #add a column for partial or full
+                     mutate(rcorr_type = ifelse(corr_type == "partial correlation", "part", rcorr_type)) #fix the p.cor label
+
+### what rows from the raw_es_dat are not in the any of the subsetted dataframes?
+es_miss <- raw_es_df %>% anti_join(es_dat, by = c("studyID")) 
+### how many unique studies are there in the effect size dataframe?
+es_dat %>% distinct(studyID) %>% nrow()
+### how many unique cities are there in the effect size dataframe?
+es_dat %>% distinct(City) %>% nrow()
 
 # save to csv for modelling
 write_csv(es_dat, "./data/13-effectsize_data.csv")
 
-#rm(list = setdiff(ls(), "es_dat")) #remove all objects except es_dat, for cleaner environment
-
-### visualize
+### EXTRA visualize ####
 #### by response metric
 es_dat %>% group_by(r_metric) %>% tally() %>% 
   ggbarplot(x = "r_metric", y = "n", ggtheme = theme_bw(), fill = "green4",
@@ -226,3 +240,10 @@ es_dat %>% group_by(rcorr_type) %>% tally() %>%
             label = T, lab.pos = "out", lab.hjust = 1.2, lab.vjust = 0.5, lab.size = 3.5, lab.col = "white",
             title = "Correlation vs Partial-correlation", ylab = "# of effect sizes", xlab = "",
             orientation = "horizontal", sort.val = "asc")
+
+#### density of effect sizes by studyclass
+ggdensity(data = es_dat, x = "yi", y = "density", add = "mean", rug = T, 
+          color = "Study_class", fill = "Study_class", palette = get_palette("Set1", 9), size = 1)
+
+ggdensity(data = es_dat, x = "yi", y = "density", add = "mean", rug = T, 
+          color = "Conn_feat", fill = "Conn_feat", palette = get_palette("Set2", 12), size = 1)
