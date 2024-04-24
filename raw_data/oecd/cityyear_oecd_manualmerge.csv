@@ -1,5 +1,5 @@
 City_clean,Country,Study_year,urbarea_km2,hpd_km2,green_prop
-Buenos Aires,Argentina,2002,203,14237,na
+Buenos Aires,Argentina,2002,203,14237,na
 Cordoba,Argentina,2017,576,2308.340278,na
 Brisbane,Australia,2001,298,107,42.7
 Brisbane,Australia,2008,340,127,42.7
@@ -108,7 +108,6 @@ Las Cruces,United States,2014,48,22,11.3
 Los Angeles,United States,2004,1874,197,25.6
 Los Angeles,United States,2000,1788,187,25.6
 Los Angeles,United States,2002,1788,192,25.6
-New York,United States,2011,1509,825,55.7
 New York,United States,2010,1509,820,55.7
 New York,United States,2017,1581,837,55.7
 New York,United States,2012,1563,829,55.7
