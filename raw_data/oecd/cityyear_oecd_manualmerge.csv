@@ -1,0 +1,121 @@
+City_clean,Country,Study_year,urbarea_km2,hpd_km2,green_prop
+Buenos Aires,Argentina,2002,203,14237,na
+Cordoba,Argentina,2017,576,2308.340278,na
+Brisbane,Australia,2001,298,107,42.7
+Brisbane,Australia,2008,340,127,42.7
+Melbourne,Australia,2007,511,384,43.7
+Melbourne,Australia,2003,484,359,43.7
+Melbourne,Australia,2002,484,354,43.7
+Perth,Australia,2008,296,261,27.4
+Perth,Australia,2000,285,226,27.4
+Perth,Australia,2005,296,240,27.4
+Perth,Australia,2009,309,270,27.4
+Sydney,Australia,1998,386,331,47.3
+Sydney,Australia,2015,476,398,47.3
+Sydney,Australia,2006,437,343,47.3
+Salzburg,Austria,2011,34,227,40.8
+Vienna,Austria,2005,227,271,52.2
+Brussels,Belgium,2015,40,7257,44.7
+Curitiba,Brazil,2015,432,4166.666667,na
+Florianopolis,Brazil,2018,675,796.1,na
+Goiania,Brazil,2010,733,1777,na
+Joao Pessoa,Brazil,2014,1251,937.7,23.56666667
+Rio Branco,Brazil,2006,8835,28.64,na
+Salvador,Brazil,2012,4337.72,905.8235663,na
+Salvador,Brazil,2009,693.3,4183,na
+Sao Paulo,Brazil,2000,7154,2744,na
+Vila Velha,Brazil,2015,1734,912.7,na
+Calgary,Canada,2005,135,64,39.8
+Calgary,Canada,2006,135,66,39.8
+Edmonton,Canada,2011,174,64,40.4
+Montreal,Canada,2005,367,327,42.1
+Vancouver,Canada,2002,195,707,51.8
+Victoria,Canada,2007,34,330,66.2
+Beijing,China,2016,1385,1700,na
+Beijing,China,2007,94.6,1700,na
+Hangzhou,China,2018,300,1300,37.9
+Nanjing,China,2019,6658,1253.529588,na
+Shanghai,China,2017,6341,4200,na
+Wuhan,China,2023,8569.15,1447.051341,na
+San Jose,Costa Rica,2019,2044,1056,na
+Helsinki,Finland,2017,88,312,54.9
+Turku,Finland,2015,30,79,51.5
+Marseille,France,2008,194,453,43.4
+Marseille,France,2007,183,452,43.4
+Paris,France,2002,700,649,43.6
+Paris,France,2001,700,649,43.6
+Paris,France,2009,754,660,43.6
+Rennes,France,2016,106,191,44.1
+Rennes,France,2015,106,189,44.1
+Berlin,Germany,2014,318,512,56.6
+Berlin,Germany,2021,332,548,56.6
+Berlin,Germany,2012,305,500,56.6
+Berlin,Germany,2011,305,494,56.6
+Berlin,Germany,2013,318,506,56.6
+Brunswick,Germany,2020,64,333,52.2
+Hamburg,Germany,2000,233,412,59.1
+Munich,Germany,2018,209,496,49.1
+Milan,Italy,2006,334,1467,41.3
+Milan,Italy,2000,322,1425,41.3
+Milan,Italy,2012,346,1533,41.3
+Rome,Italy,2000,226,610,42.4
+Osaka [Kyoto],Japan,2021,557,2732,na
+Osaka [Kyoto],Japan,2000,817,1946,24.4
+Sapporo,Japan,2011,137,846,23.2
+Tokyo,Japan,2009,1750,3078,24.2
+Tokyo,Japan,2016,1806,3186,24.2
+Tokyo,Japan,2000,1635,2935,24.2
+Chetumal,Mexico,2020,35.83,4717,na
+Dunedin,New Zealand,2005,13,109,49.6
+Quezon City [Manila],Philippines,2014,599,22512,na
+Lublin,Poland,2007,59,210,48.2
+Warsaw,Poland,2013,253,355,52.1
+Cape Town,South Africa,2007,1137,2356,na
+Cape Town,South Africa,2017,1137,3018,na
+Cape Town,South Africa,2008,1137,2356,na
+Durban,South Africa,2016,2556,1360,na
+Johannesburg,South Africa,2019,1645,2500,na
+Cheonan-si,South Korea,2015,43,928,32.1
+Seoul,South Korea,2009,600,3573,40.7
+Seoul,South Korea,2012,661,3613,40.7
+Barcelona,Spain,2019,318,1926,41.2
+Barcelona,Spain,2014,309,1877,41.2
+Madrid,Spain,1998,245,739,37.2
+Valencia,Spain,1998,72,896,37.5
+Malmo,Sweden,2006,51,303,40
+Stockholm,Sweden,2019,117,332,60.5
+Stockholm,Sweden,2021,117,338,60.5
+Stockholm,Sweden,2015,111,311,60.5
+Zurich,Switzerland,2011,89,942,54.7
+Zurich,Switzerland,2009,89,924,54.7
+New Taipei [Taipei],Taiwan,2004,272,9546,na
+Bedford,United Kingdom,2013,15,340,48.8
+Birmingham,United Kingdom,2000,204,1293,51.9
+Luton,United Kingdom,2013,10,4864,37.3
+Milton Keynes,United Kingdom,2013,20,831,60.2
+"Milton Keynes, Bedford, Luton",United Kingdom,2014,20,844,60.2
+Sheffield,United Kingdom,2009,89,892,53.2
+Bedford,United States,2014,9219,183.4,37.3
+Charlotte,United States,2010,278,256,65.5
+Chicago,United States,2005,1192,490,50.4
+Cleveland,United States,2015,1849,926.1,na
+Cleveland,United States,2016,1849,926.1,na
+Cleveland,United States,2010,1849,963.2,na
+Denver,United States,2002,322,103,42.1
+Denver,United States,2006,343,109,42.1
+Denver,United States,2004,343,106,42.1
+Las Cruces,United States,2014,48,22,11.3
+Los Angeles,United States,2004,1874,197,25.6
+Los Angeles,United States,2000,1788,187,25.6
+Los Angeles,United States,2002,1788,192,25.6
+New York,United States,2011,1509,825,55.7
+New York,United States,2010,1509,820,55.7
+New York,United States,2017,1581,837,55.7
+New York,United States,2012,1563,829,55.7
+New York,United States,2011,1509,825,55.7
+New York,United States,2002,1386,802,55.7
+Tijuana,United States,1995,296,256,35.5
+San Jose,United States,2018,670,492,32.8
+St. Louis,United States,1999,365,101,57.5
+Thousand Oaks,United States,2013,207.7,1034,na
+Washington D.C.,United States,2011,903,360,64
