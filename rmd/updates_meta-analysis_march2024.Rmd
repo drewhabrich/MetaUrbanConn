@@ -1,0 +1,294 @@
+---
+title: "UrbanConnectivity-Metaanalysis-updates"
+author: "Andrew Habrich"
+date: "`r format(Sys.Date(), '%d %B, %Y')`"
+output: 
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: true
+    fig_caption: true
+    df_print: paged
+    toc_depth: 3
+    highlight: tango
+
+  
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Meta-analysis preparation overview
+
+```{r packages1, message=FALSE, warning=FALSE, include=FALSE}
+### for data manipulation
+library(tidyverse)
+library(easystats)
+library(metafor)
+library(emmeans)
+
+### for figures
+library(DataExplorer)
+library(ggpubr)
+library(knitr)
+```
+
+The following R packages (and their versions) were used to generate this report.
+
+```{r packageversions1, echo=FALSE, warning=FALSE}
+installed.packages()[names(sessionInfo()$otherPkgs), "Version"]
+```
+
+# Data
+
+```{r data1, warning=FALSE, include=FALSE}
+### load data
+es_dat <- read_csv("./data/13-effectsize_data.csv")
+## NOTE: 6 studies with missing lat/long (issue with city names)
+missinglats <- nrow(es_dat %>% filter(is.na(LATITUDE)) %>% distinct(studyID))
+uniquestudies <- nrow(es_dat %>% distinct(studyID))
+
+# reverse the sign if the metric was dependent on 'impervious/developed surfaces' to be consistent with the other metrics
+es_dat <- es_dat %>% mutate(Conn_lcclass = ifelse(is.na(.$Conn_lcclass), "n/a", .$Conn_lcclass))
+es_dat$yi <- ifelse(es_dat$Conn_lcclass == "grey", es_dat$yi * -1, es_dat$yi)
+# combine taxa levels to create unique identifier
+es_dat <- es_dat %>% mutate(study_taxagroup = paste(Study_class, Study_order, Study_spec, sep = "-"))
+```
+
+This is data extracted for `r {nrow(es_dat %>% distinct(studyID))}` studies, with `r {nrow(es_dat)}` effect sizes. In addition, there are 13 other studies that report data for *(generalized) linear mixed models*, but I am unsure how comparable they are.
+
+The data includes raw effect sizes (Fisher's z transformed correlation coefficients) for the relationship between a variety of response variables (**species richness, abundance, occurrence, genetic differentiation and a few others**), and metrics of connectivity categorized into different types following their definitions (as described by [@kindlmann2008], [@kupfer2012], and [@keeley2021].
+
+The following figures show the distribution of effect sizes across different categories of the data.
+
+```{r data2, echo=FALSE, fig.height=8, fig.width=7, warning=FALSE}
+##density of effect sizes
+a<- ggdensity(data = es_dat, x = "yi", y = "density", add = "mean", rug = T, 
+          color = "Study_class", fill = "Study_class", palette = get_palette("Set1", 9), size = 1,
+          xlab = "Effect size (Fisher's z)", ylab = "Density")
+##effect size vs latitude
+b<- ggscatter(data = es_dat, y = "LATITUDE", x = "yi", rug = T, point_shape = 21,
+          color = "Study_class", fill = "Study_class", palette = get_palette("Set1", 9), size = 2,
+          xlab = "Effect size (Fisher's z)", ylab = "Latitude")
+##effect size vs pubyear
+c<- ggscatter(data = es_dat, y = "Pub_year", x = "yi", rug = F, point_shape = 21,
+          color = "Study_class", fill = "Study_class", palette = get_palette("Set1", 9), size = 2,
+          xlab = "Effect size (Fisher's z)", ylab = "Publication year")
+ggarrange(a,b,c, ncol = 1, nrow = 3, common.legend = TRUE, legend = "right")
+```
+
+For the first density plot, the dashed lines are the **mean** effects. All the plots are grouped by the study taxa, and the raw correlation coefficients were transformed into the Fisher's z scale.
+
+# Journal and study information
+
+```{r figs_journalinfo, echo=FALSE, fig.height=6, fig.width=6,  warning=FALSE, fig.align = 'center'}
+### 3.2 Study information ----
+### how many studies per journal
+es_dat %>%
+  group_by(Pub_name) %>%
+  summarise(studycount = n_distinct(Study_no)) %>% 
+  ggplot(aes(x = reorder(Pub_name, studycount), y = studycount)) +
+  geom_bar(stat = "identity", fill = "skyblue") +
+  geom_text(aes(label = studycount), hjust = -0.1, size = 3) +
+  labs(title = "Number of studies with data extracted by Journal",
+       x = "Journal",
+       y = "Number of unique studies") +
+  theme_bw() + scale_x_discrete(
+    labels = function(x)
+      str_trunc(x, 25)) + 
+  theme(axis.text.y = element_text(size = 8)) +  coord_flip()
+```
+
+```{r figs_pubyear, fig.height=6, fig.width=6, fig.align = 'center',  echo=FALSE, warning=FALSE}
+### distribution of publication years
+es_dat %>% distinct(studyID, Pub_year) %>%
+  ggplot(aes(x = Pub_year)) +
+  geom_histogram(binwidth = 1, position = "dodge", col = "white") +
+  labs(x = "Publication Year", y = "Count", title = "Histogram of Publication Year for Each Distinct Publication") +
+  theme_bw() + 
+  scale_x_continuous(breaks = seq(2000, 2023, by = 2)) +
+  theme(axis.text.y = element_text(size = 8))
+```
+
+```{r figs_studyinfo_studies, fig.height=8, fig.width=6, fig.align = 'center', echo=FALSE, warning=FALSE}
+### how many studies per City
+es_dat %>%
+  group_by(City) %>%
+  summarise(studycount = n_distinct(Study_no)) %>% 
+  ggplot(aes(x = reorder(City, studycount), y = studycount)) +
+  geom_bar(stat = "identity", fill = "orchid") +
+  geom_text(aes(label = studycount), hjust = -0.1, size = 2.5) +
+  labs(title = "Number of studies with data extracted by City",
+       x = "City",
+       y = "Number of unique studies") +
+  theme_bw() +  theme(axis.text.y = element_text(size = 7.5)) +  coord_flip()
+
+```
+
+```{r figs_studyinfo_countries, fig.height=6, fig.width=6, fig.align = 'center', echo=FALSE, warning=FALSE}
+### How many studies per country?
+es_dat %>%
+  group_by(Country) %>%
+  summarise(studycount = n_distinct(Study_no)) %>% 
+  ggplot(aes(x = reorder(Country, studycount), y = studycount)) +
+    geom_bar(stat = "identity", fill = "orchid") +
+    geom_text(aes(label = studycount), hjust = -0.1, size = 3) +
+    labs(title = "Number of Unique studies by Country",
+       x = "Country",
+       y = "Number of unique studies") +
+    theme_bw() +  theme(axis.text.y = element_text(size = 8)) +  coord_flip()
+```
+
+```{r figs_studyinfo_studies2, eval=FALSE, fig.height=6, fig.width=6,fig.align = 'center',  warning=FALSE, include=FALSE}
+########## GEOGRAPHIC LOCATION OF CITIES ###
+es_dat %>% group_by(studyID) %>% 
+  distinct(studyID, .keep_all = T) %>% 
+  ggdensity(x = "LATITUDE", y = "density", rug = T)
+########## ADD A MAPVIEW IF POSSIBLE #######
+
+```
+
+```{r figs_studyinfo_effectsizes, fig.height=8, fig.width=6, fig.align = 'center', echo=FALSE, warning=FALSE}
+### how many effect sizes per city?
+es_dat %>%
+  group_by(City) %>%
+  tally() %>% 
+  ggplot(aes(x = reorder(City, n), y = n)) +
+  geom_bar(stat = "identity", fill = "darkorchid") +
+  geom_text(aes(label = n), hjust = -0.1, size = 3) +
+  labs(title = "Number of effect sizes by City",
+       x = "Country",
+       y = "Number of effect sizes") +
+  theme_bw() +  theme(axis.text.y = element_text(size = 8)) +  coord_flip()
+```
+
+```{r figs_studyinfo_effectsizes2, fig.align = 'center', echo=FALSE, warning=FALSE}
+### How many effect sizes per country?
+es_dat %>%
+  group_by(Country) %>%
+  tally() %>% 
+  ggplot(aes(x = reorder(Country, n), y = n)) +
+  geom_bar(stat = "identity", fill = "darkorchid") +
+  geom_text(aes(label = n), hjust = -0.1, size = 3) +
+  labs(title = "Number of effect sizes by Country",
+       x = "Country",
+       y = "Number of effect sizes") +
+  theme_bw() +  theme(axis.text.y = element_text(size = 8)) +  coord_flip()
+```
+
+# Taxonomic information
+
+**Note** that the taxonomic information is not complete for all studies, and the taxonomic resolution varies between studies; e.g. studies with *'arthropoda'*, and many studies with *'plantae'* as focal taxa are only reported at a broad taxonomic level.
+
+```{r figs_taxa, echo=FALSE, fig.align = 'center', warning=FALSE}
+### Effect sizes by study taxa
+es_dat %>%
+  group_by(Study_class) %>%
+  tally(sort = T) %>% 
+  ggplot(aes(x = reorder(Study_class, n), y = n)) +
+  geom_bar(stat = "identity", fill = "darkorchid") +
+  geom_text(aes(label = n), hjust = -0.1, size = 3) +
+  labs(title = "Number of effect sizes by taxonomic class",
+       x = "Taxonomic class",
+       y = "Number of effect sizes") +
+  theme_bw() +  theme(axis.text.y = element_text(size = 8)) +  coord_flip()
+
+### Effect sizes by country and taxa
+es_dat %>%
+  group_by(Country, Study_class) %>%
+  tally(sort = T) %>% ungroup(Study_class) %>% mutate(total = sum(n)) %>% 
+  ggplot(aes(x = reorder(Country, total), y = n, fill = Study_class)) +
+  geom_bar(stat = "identity", colour = "black") +
+  geom_text(aes(label = n), size = 3, check_overlap = T, position = position_stack(vjust = 0.5)) +
+  labs(title = "Number of effect sizes by Country and taxa",
+       x = "Country",
+       y = "Number of effect sizes") +
+  theme_bw() + theme(axis.text.y = element_text(size = 8), legend.position = c(0.85,0.35)) + coord_flip()
+
+```
+
+# Connectivity metrics
+
+Connectivity metrics were binned based on their **type** (structural, potential, functional) and the **feature** of the landscape that connectivity is being assessed for, based on author's descriptions of the metric and definitions from [@keeley2021] and [Fragstats documentation](https://www.fragstats.org/index.php/documentation). The following figures show the distribution of effect sizes across these categories.
+
+```{r figs_connectivitymetrics, fig.align = 'center', echo=FALSE, warning=FALSE}
+
+### 3.1 Connectivity metrics figures ----
+### Barplot of connectivity metrics used
+es_dat %>% group_by(Conn_type) %>% tally() %>% 
+  ggbarplot(x = "Conn_type", y = "n", ggtheme = theme_bw(), fill = "grey",
+            label = T, lab.pos = "out", lab.hjust = 1.2,lab.vjust = 0.5,
+            title = "Category of connectivity metric", xlab = "", ylab = "# of effect sizes", 
+            orientation = "horizontal", sort.val = "asc") 
+## Barplot of the features for connectivity metrics used
+es_dat %>% group_by(Conn_feat) %>% tally() %>% 
+  ggbarplot(x = "Conn_feat", y = "n", ggtheme = theme_bw(), fill = "grey",
+            label = T, lab.pos = "out", lab.hjust = 1.2,lab.vjust = 0.5,
+            title = "Type of feature for connectivity metric", xlab = "", ylab = "# of effect sizes", 
+            orientation = "horizontal", sort.val = "asc")
+```
+
+The most common connectivity metrics were based on 'habitat' area in a buffer (typically based on dispersal distances), or euclidean distances between sites/patches. Because of the large spectrum of metrics used, it is likely that the categories these metrics are binned into (the two previous figures) will be used as moderators in the meta-analysis.
+
+```{r figs_connectivitymetrics2, fig.align = 'center', echo=FALSE, fig.height=8, fig.width=8, warning=FALSE}
+## the actual metrics assessed
+#### by connectivity metric
+es_dat %>% group_by(Conn_metric) %>% tally() %>% 
+  ggbarplot(x = "Conn_metric", y = "n", ggtheme = theme_bw(), fill = "grey",
+            label = T, lab.pos = "out", lab.hjust = 1.2, lab.vjust = 0.4, lab.size = 3,
+            title = "Connectivity Metric", xlab = "", ylab = "# of effect sizes", 
+            orientation = "horizontal", sort.val = "asc", position = position_dodge())
+```
+
+# Response metrics
+
+Many papers report multiple response metrics, particularly for species richness and abundance or occurrence and abundance. Genetic studies often only report one response metric related to connectivity; genetic differentiation (a.k.a. genetic 'distance'), but these are sometimes based on different genetic markers (e.g. microsatellites, SNPs, etc.).
+
+One major question for the meta-analysis: **How to handle multiple response metrics?**
+
+-   Everything into **a global model** with to get an 'overall' effect of connectivity on biodiversity outcomes with and without moderators coded for metric type and response type.
+-   Seperate **meta-analyses for each of the response metrics**. Since each of these response metrics capture different aspects of biodiversity, it is likely that the mechanisms of how connectivity impacts them isn't the same.
+
+```{r figs_responsemetrics, echo=FALSE, fig.align = 'center', fig.height=7, fig.width=8,warning=FALSE}
+### Number of effect sizes per response metric 
+es_dat %>% group_by(r_metric) %>% tally() %>% 
+  ggbarplot(x = "r_metric", y = "n", ggtheme = theme_bw(), fill = "forestgreen",
+            label = T, lab.pos = "out", lab.hjust = 1.2, lab.vjust = 0.5, lab.size = 3.5, lab.col = "white",
+            title = "Response metric", xlab = "", ylab = "# of effect sizes", orientation = "horizontal", sort.val = "asc",
+            position = position_dodge())
+```
+
+In addition, the reponse of the connectivity metrics on biodiversity were assessed using different correlation types, including Pearson's correlation, Spearman's correlation, and partial-correlation. The following figure shows the distribution of effect sizes across these correlation types. **Note though** that data was extracted prioritizing Pearson's correlation coefficients, Spearman's correlation, and raw site-level data where available. Partial-correlation coefficients were extracted when available, but these are less common.
+
+```{r figs_correlationtype, echo=FALSE, fig.align = 'center', fig.height=6, fig.width=6, warning=FALSE}
+### Number of effect sizes per correlational type
+es_dat %>% group_by(corr_type) %>% tally() %>% 
+  ggbarplot(x = "corr_type", y = "n", ggtheme = theme_bw(), fill = "yellowgreen",
+            label = T, lab.pos = "out", lab.hjust = 1.05, lab.vjust = 0.5, lab.size = 3.5, lab.col = "black",
+            title = "Correlation metric", xlab = "", ylab = "# of effect sizes", orientation = "horizontal", sort.val = "asc",
+            position = position_dodge()) + geom_vline(xintercept = 7.5, linetype = "dashed")
+```
+
+# Next steps:
+
+-   Finish extracting relevant information for the rest of eligible papers.
+-   Write a script for conducting a global meta-analysis for all effect sizes.
+-   Finish writing script for conducting analysis meta-regression per connectivity metric and biodiversity metric that have a large enough sample size.
+-   Estimate variance-covariance matrix for multiple effect sizes that come from the same study, for dependent effect sizes. Incorporate into the model and evaluate the impact of this on the results.
+
+# References:
+
+## References for the data extracted
+
+```{r datarefs, echo=FALSE}
+#select the relevant data
+es_refs <- es_dat %>% select(FirstAuth, Pub_year, Pub_name, DOI) %>% distinct() %>% arrange(FirstAuth)
+knitr::kable(es_refs, col.names = c("First Author", "Year", "Journal", "DOI"), align = "llll") %>% 
+  kableExtra::kable_styling("striped", full_width = F, position = "center") %>% 
+  kableExtra::scroll_box(width = "100%", height = "300px")
+```
+
+## References for this document

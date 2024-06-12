@@ -1,0 +1,336 @@
+---
+title: "UrbanConnectivity-Metaanalysis-updates"
+author: "Andrew Habrich"
+date: "`r format(Sys.Date(), '%d %B, %Y')`"
+output: 
+  html_document:
+    theme: cosmo
+    toc: true
+    toc_float: true
+    number_sections: true
+    fig_caption: true
+    df_print: paged
+    toc_depth: 3
+    highlight: tango
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Meta-analysis prep
+
+```{r packages1, message=FALSE, warning=FALSE, include=FALSE}
+pacman::p_load(devtools, tidyverse, metafor, patchwork, R.rsp, orchaRd, emmeans,
+               ape, phytools, flextable)
+
+## 1. Load relevant packages--------
+### for stats
+library(tidyverse)
+library(easystats)
+library(metafor)
+library(emmeans)
+
+### for figures
+library(DataExplorer)
+library(ggpubr)
+library(knitr)
+library(mapview)
+
+### custom functions ###
+## function to remove accents from city names
+remove_accents <- function(x) {
+  stringi::stri_trans_general(x, "latin-ascii")
+}
+```
+
+The following R packages (and their versions) were used to generate this report.
+
+```{r packageversions1, echo=FALSE, warning=FALSE}
+installed.packages()[names(sessionInfo()$otherPkgs), "Version"]
+```
+
+# Data
+
+```{r data1, warning=FALSE, include=FALSE}
+## 2. Load data ---------------------
+es_dat <- read_csv("./data/13-effectsize_data.csv")
+ghs <- readxl::read_xlsx("./raw_data/ghsl/globalhumansettlement2019.xlsx")
+oecd <- read_csv("./raw_data/oecd/cityyear_oecd_manualmerge.csv", na = "na")
+
+### remove accents from city names
+es_dat$City_clean <- remove_accents(es_dat$City)
+ghs$city <- remove_accents(ghs$city)
+
+### 2.1 Data cleaning and pre-processing ----
+es_dat$Study_year <- stringr::str_remove(es_dat$Study_year, "-.*") %>% as.numeric(es_dat$Study_year)
+
+## create a copy of the dataframe to manipulate
+cities <- es_dat
+## cleanup the country names and city names ### HOW DO I MAKE FUZZY MATCHING WORK?
+cities$City_clean <- cities$City_clean %>% str_replace("Braunschweig", "Brunswick")
+cities$City_clean <- cities$City_clean %>% str_replace("Washington, D.C.", "Washington D.C.")
+cities$City_clean <- cities$City_clean %>% str_replace("Taipei", "New Taipei [Taipei]")
+cities$City_clean <- cities$City_clean %>% str_replace("Osaka", "Osaka [Kyoto]")
+cities$City_clean <- cities$City_clean %>% str_replace("Kobe", "Osaka [Kyoto]")
+cities$City_clean <- cities$City_clean %>% str_replace("Cheonan", "Cheonan-si")
+cities$City_clean <- cities$City_clean %>% str_replace("Manila", "Quezon City [Manila]")
+cities$City_clean <- cities$City_clean %>% str_replace("San Diego", "Tijuana")
+cities$City_clean <- cities$City_clean %>% str_replace("San Francisco", "San Jose")
+cities$City_clean <- cities$City_clean %>% str_replace("New Jersey", "New York")
+cities$City_clean <- cities$City_clean %>% str_replace("Vitoria", "Vila Velha")
+
+citieslist <- cities %>% select(City_clean, Country) %>% distinct() 
+## merge the distinct cities from the es_data that are in the global human settlement dataframe
+cityghsl <- citieslist %>% left_join(ghs, by = c("City_clean" = "city", "Country" = "country")) %>% 
+  slice(-41) ## remove row 41 from the dataframe (the faulty nanjing entry)
+
+## merge columns from city_dat to es_dat, matched based on city and study_year
+cities <- left_join(cities, cityghsl, by = c("City_clean" = "City_clean", 
+                                             "Country" = "Country"))
+## merge columns from oecd to new cities dataframe, matched based on city and country and study year
+cities <- left_join(cities, oecd, by = c("City_clean" = "City_clean", 
+                                         "Country" = "Country", 
+                                         "Study_year" = "Study_year"))
+
+## remove columns that are not needed
+cities <- cities %>% select(-c(Pub_type, DOI, Study_effect, Conn_tool, r_method, corr_type,
+                               mi, ri, ti, fi, pi, bi, var_sdi, var_type, R2i, 
+                               country_code, xborder_country, urban_incity, UC_NM_SRC)) 
+
+# reverse the sign if the metric was dependent on 'impervious/developed surfaces' to be consistent with the other metrics
+cities <- cities %>% mutate(Conn_lcclass = ifelse(is.na(.$Conn_lcclass), "n/a", .$Conn_lcclass))
+cities$yi <- ifelse(cities$Conn_lcclass == "grey", cities$yi * -1, cities$yi)
+# combine taxa levels to create unique identifier
+cities <- cities %>% mutate(study_taxagroup = paste(Study_class, Study_order, Study_spec, sep = "-"))
+# convert latitude to absolute value
+cities <- cities %>% mutate(absLat = abs(lat))
+# remove rows with NA in absLat
+cities <- cities %>% filter(!is.na(absLat))
+
+## log transform the urban area, human population density, and green space and plot histograms
+cities <- cities %>% mutate(urbarea_km2_log = log(urbarea_km2 + 1),
+                            hpd_km2_log = log(hpd_km2 + 1),
+                            green_prop_log = log(green_prop + 1))
+cities <- cities %>% mutate(prop_green = area_km2/E_GR_AT14,
+                            pop_dens = pop15/area_km2,
+                            green15_km2 = area_km2 - built15_km2,
+                            E_GR_AV14 = as.numeric(E_GR_AV14))
+
+cities <- cities %>% 
+  mutate(area_km2_log = log(area_km2 + 1), 
+         built15_km2_log = log(built15_km2 + 1),
+         pop15_log = log(pop15 + 1),
+         BUCAP15_log = log(BUCAP15 + 1),
+         E_GR_AT14_log = log(E_GR_AT14 + 1),
+         prop_green_log = log(prop_green + 1),
+         pop_dens_log = log(pop_dens + 1),
+         green15_km2_log = log(green15_km2 + 1))
+
+### BINS
+cities <- cities %>% mutate(Study_class = ifelse(Study_class == "arthropoda", "insecta", Study_class))
+#Subset to get only the metrics that have more than 10 effect sizes
+es_dat_pool <- cities %>%
+  mutate(r_metric = case_when(
+    str_detect(r_metric, "beta diversity|dissimilarity$") ~ "beta-diversity", #combine dissimilarity metrics
+    str_detect(r_metric, "movement|return time|activity ratio") ~ "movement", #combine movement metrics
+    str_detect(r_metric, "evenness") ~ "evenness", #combine evenness metrics
+    str_detect(r_metric, "functional") ~ "functional traits", #combine functional trait metrics
+    TRUE ~ r_metric)) %>%
+  group_by(r_metric) %>%
+  filter(n() >= 10) %>% ungroup()
+
+#Subset the data to only include the richness, abundance, shannon diversity, occurrence, and genetic distance metrics
+es_dat_max <- cities %>%
+  filter(r_metric %in% c("species richness", "abundance", "shannon diversity", "occurrence", "genetic dist."))
+
+```
+
+```{r data2, echo=FALSE, fig.height=6, fig.width=9, warning=FALSE}
+##density of effect sizes
+a<- ggdensity(data = es_dat_pool, y = "density", x = "yi", add = "mean", rug = F, 
+          color = "Study_class", fill = "Study_class", palette = get_palette("Set1", 9), size = 1,
+          xlab = "Effect size (Fisher's z)", ylab = "Density")
+##effect size vs latitude
+b<- ggscatter(data = es_dat_pool, x = "lat", y = "yi", rug = F, point_shape = 21,
+          color = "Study_class", fill = "Study_class", palette = get_palette("Set1", 9), size = 2,
+          ylab = "Effect size (Fisher's z)", xlab = "Latitude")
+##effect size vs pubyear
+c<- ggscatter(data = es_dat_pool, x = "Pub_year", y = "yi", rug = F, point_shape = 21,
+          color = "Study_class", fill = "Study_class", palette = get_palette("Set1", 9), size = 2,
+          ylab = "Effect size (Fisher's z)", xlab = "Publication year")
+##effect size vs greenness index
+d<- ggscatter(data = es_dat_pool, x = "E_GR_AV14", y = "yi", rug = F, point_shape = 21,
+          color = "Study_class", fill = "Study_class", palette = get_palette("Set1", 9), size = 2,
+          ylab = "Effect size (Fisher's z)", xlab = "Greenness index")
+ggarrange(a,b,c,d, ncol = 2, nrow = 2, common.legend = TRUE, legend = "bottom")
+```
+
+```{r figs_countryloc, echo=FALSE, fig.height=6, fig.width=9, warning=FALSE}
+## for each unique combination of city_clean and country, plot the location on a map with lat and long as coordinates with mapview
+es_dat_pool %>% distinct(City_clean, Country, lat, long) %>% sf::st_as_sf(coords = c("long", "lat"), crs = 4326) %>% 
+  mapview::mapview(zcol = "City_clean", col.regions = "red", col = "black", lwd = 2, legend = F, label = "City_clean")
+```
+
+# Modelling
+```{r globalmodel, message=FALSE, warning=FALSE, include=FALSE}
+modmvG <- rma.mv(yi = yi, V = vi,
+                 mods = ~ factor(Study_class) +
+                          factor(r_metric) +
+                          factor(Conn_feat) +
+                          absLat +
+                          Pub_year+
+                          area_km2_log +
+                          pop_dens_log +
+                          E_GR_AV14 -1,
+                random = list(~ 1 | studyID,
+                              ~ 1 | ES_no),
+                data = es_dat_pool, method = "REML", test = "t", dfs = "contain", verbose = T,
+                control = list(rel.tol = 1e-6))
+```
+```{r globalmodres, echo=FALSE, message=FALSE, warning=FALSE}
+summary(modmvG)
+funnel(modmvG)
+i2_ml(modmvG); r2_ml(modmvG, data = es_dat_pool)
+```
+
+```{r univariatemodels, echo=FALSE, message=FALSE, warning=FALSE}
+modmvGg <- rma.mv(yi = yi, V = vi,
+                 mods = ~ factor(Conn_feat) -1,
+                 random = list(~ 1 | studyID,
+                               ~ 1 | ES_no),
+                 data = es_dat_pool, method = "REML", test = "t", dfs = "contain", verbose = T,
+                 control = list(rel.tol = 1e-6))
+funnel(modmvGg)
+i2_ml(modmvGg); r2_ml(modmvGg, data = es_dat_pool)
+orchard_plot(modmvGg, 
+             mod = "Conn_feat",
+             condition.lab = "Connectivity feature", angle = 0,
+             xlab = "Correlation coefficient", transfm = "tanh", 
+             group = "studyID",  k = TRUE, g = TRUE, cb = T)
+
+modmvGh <- rma.mv(yi = yi, V = vi,
+                 mods = ~ factor(Study_class) -1,
+                 random = list(~ 1 | studyID,
+                               ~ 1 | ES_no),
+                 data = es_dat_pool, method = "REML", test = "t", dfs = "contain", verbose = T,
+                 control = list(rel.tol = 1e-6))
+funnel(modmvGh)
+i2_ml(modmvGh); r2_ml(modmvGh, data = es_dat_pool)
+orchard_plot(modmvGh, 
+             mod = "Study_class",
+             condition.lab = "Taxonomic class", angle = 0,
+             xlab = "Correlation coefficient", transfm = "tanh", 
+             group = "studyID",  k = TRUE, g = TRUE, cb = T)
+```
+
+## Species richness
+```{r sr, message=FALSE, warning=FALSE, include=FALSE}
+####################### SPECIES RICHNESS ###############################
+es_dat_rich <- es_dat_pool %>% filter(r_metric == "species richness") %>% filter(!is.na(absLat))
+## remove Conn_feat that have less than 3 entries
+es_dat_rich <- es_dat_rich %>% group_by(Conn_feat) %>% filter(n() >= 3) %>% ungroup()
+mod_richE <- rma.mv(yi = yi, V = vi,
+                    mods = ~ factor(Conn_feat) + E_GR_AV14 -1,
+                    random = list(~ 1 | studyID,
+                                  ~ 1 | ES_no),
+                    data = es_dat_rich, method = "REML", test = "t", dfs = "contain", verbose = T)
+```
+
+```{r sr_res, echo=FALSE, message=FALSE, warning=FALSE}
+funnel(mod_richE)
+r2_ml(mod_richE, data = es_dat_rich)
+i2_ml(mod_richE)
+orchard_plot(mod_richE, 
+             mod = "Conn_feat",
+             condition.lab = "Conn. feature", angle = 0,
+             xlab = "Correlation coefficient", transfm = "tanh", 
+             group = "studyID",  k = TRUE, g = TRUE)
+bubble_plot(mod_richE, mod = "E_GR_AV14", group = "studyID",
+            ylab = "Effect size Fisher's Z", xlab = "Avg. Greeness index")
+```
+
+## Abundance
+```{r abun, message=FALSE, warning=FALSE, include=FALSE}
+es_dat_abun <- es_dat_pool %>% filter(r_metric == "abundance") %>% filter(!is.na(absLat))
+## remove Conn_feat that have less than 3 entries
+es_dat_abun <- es_dat_abun %>% group_by(Conn_feat) %>% filter(n() >= 3) %>% ungroup()
+mod_abunF <- rma.mv(yi = yi, V = vi,
+                    mods = ~ factor(Study_class) + E_GR_AV14 -1,
+                    random = list(~ 1 | studyID,
+                                  ~ 1 | ES_no),
+                    data = es_dat_abun, method = "REML", test = "t", dfs = "contain", verbose = T)
+```
+
+```{r abun_res, echo=FALSE, message=FALSE, warning=FALSE}
+funnel(mod_abunF)
+r2_ml(mod_abunF, data = es_dat_abun)
+i2_ml(mod_abunF)
+orchard_plot(mod_abunF, 
+             mod = "Study_class",
+             condition.lab = "Taxon class", angle = 45,
+             xlab = "Correlation coefficient", transfm = "tanh", 
+             group = "studyID",  k = TRUE, g = TRUE)
+bubble_plot(mod_abunF, mod = "E_GR_AV14", group = "studyID", transfm = "tanh",
+            ylab = "Effect size Fisher's Z", xlab = "Avg. greeness index")
+```
+
+## Occurrence
+```{r occ, message=FALSE, warning=FALSE, include=FALSE}
+es_dat_occ <- es_dat_pool %>% filter(r_metric == "occurrence") %>% filter(!is.na(absLat))
+## remove Conn_feat that have less than 3 entries
+es_dat_occ <- es_dat_occ %>% group_by(Conn_feat) %>% filter(n() >= 3) %>% ungroup()
+mod_occF <- rma.mv(yi = yi, V = vi,
+                   mods = ~ factor(Study_class) + E_GR_AV14 -1,
+                   random = list(~ 1 | studyID,
+                                 ~ 1 | ES_no),
+                   data = es_dat_occ, method = "REML", test = "t", dfs = "contain", verbose = T)
+```
+
+```{r occ_res, echo=FALSE, message=FALSE, warning=FALSE}
+funnel(mod_occF)
+r2_ml(mod_occF, data = es_dat_occ)
+i2_ml(mod_occF)
+orchard_plot(mod_occF, 
+             mod = "Study_class",
+             condition.lab = "Conn. feature", angle = 0,
+             xlab = "Correlation coefficient", transfm = "tanh", 
+             group = "studyID",  k = TRUE, g = TRUE)
+bubble_plot(mod_occF, mod = "E_GR_AV14", group = "studyID", transfm = "tanh",
+            ylab = "Effect size Fisher's Z", xlab = "Avg. greeness index")
+```
+
+## Genetic differentiation
+```{r genedif, message=FALSE, warning=FALSE, include=FALSE}
+es_dat_gen <- es_dat_pool %>% filter(r_metric == "genetic dist.") %>% filter(!is.na(absLat))
+## remove Conn_feat that have less than 3 entries
+es_dat_gen <- es_dat_gen %>% group_by(Conn_feat) %>% filter(n() >= 3) %>% ungroup()
+mod_genF <- rma.mv(yi = yi, V = vi,
+                   mods = ~ factor(Conn_feat) -1,
+                   random = list(~ 1 | studyID,
+                                 ~ 1 | ES_no),
+                   data = es_dat_gen, method = "REML", test = "t", dfs = "contain", verbose = T)
+```
+
+```{r gene_res, echo=FALSE, message=FALSE, warning=FALSE}
+funnel(mod_genF)
+summary(mod_genF)
+r2_ml(mod_genF, data = es_dat_gen)
+i2_ml(mod_genF)
+orchard_plot(mod_genF, 
+             mod = "Conn_feat",
+             condition.lab = "Taxon class", angle = 45,
+             xlab = "Correlation coefficient", transfm = "tanh", 
+             group = "studyID",  k = TRUE, g = TRUE)
+```
+
+# References for the data extracted
+
+```{r datarefs, echo=FALSE}
+#select the relevant data
+es_refs <- cities %>% select(FirstAuth, Pub_year, Pub_name, City_clean) %>% distinct() %>% arrange(FirstAuth)
+knitr::kable(es_refs, col.names = c("First Author", "Year", "Journal", "City"), align = "llll") %>% 
+  kableExtra::kable_styling("striped", full_width = F, position = "center") %>% 
+  kableExtra::scroll_box(width = "100%", height = "300px")
+```

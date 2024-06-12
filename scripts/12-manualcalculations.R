@@ -6,7 +6,7 @@
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2024-02-12
-## Date last Modified: 2024-04-10
+## Date last Modified: 2024-05-31
 ##
 ## Email: 
 ## - andrhabr@gmail.com
@@ -171,7 +171,11 @@ correlation(data = platt2006, select = c("sr","nestednesstemp_rank"), select2 = 
 
 ## YANG2020
 yang2020 <- read_csv("./raw_figextraction/suppls/Yang2020raw.csv")
-correlation(data = yang2020, select = c("s_obs", "s_exp"), select2 = c("ENN_larger_m", "dist_tourbcore_m","dist_naturalarea_m"), method = "pearson")
+hist(yang2020$s_obs)
+ggscatter(yang2020, y = "s_obs", x = "dist_tourbcore_m") + stat_cor(method = "pearson")
+ggscatter(yang2020, y = "s_obs", x = "dist_naturalarea_m") + stat_cor(method = "pearson")
+correlation(data = yang2020, select = c("s_obs", "s_exp"), 
+            select2 = c("ENN_larger_m", "dist_tourbcore_m","dist_naturalarea_m"), method = "pearson")
 
 ## STERZYNSKA2018 (sample size = abundance)
 ster2018 <- readxl::read_excel("./raw_figextraction/suppls/Sterzynska2018suppl1.xlsx")
@@ -241,14 +245,61 @@ ggscatter(shackelford2019, y = "Species Turnover", x = "Connectivity") + stat_co
 
 correlation(shackelford2019, select = c("Native Richness 2007", "Species Turnover"), select2 = c("Connectivity","logConn"), method = "pearson")
 
-### Manual test statistics ####
-# ## testing values from Magle and Crook 2009
-# esc::esc_chisq(chisq = 23.03, totaln = 92, es.type = "r") #ti val, hanski metric
-# esc::esc_chisq(chisq = 3.50, totaln = 92, es.type = "r") #proportion other colonies
-# 
-# #fitzgibbon 2007
-# esc::esc_chisq(chisq = 20.95, totaln = 68, es.type = "r") 
-# 
-# ## MacDougall 2011
-# effectsize::F_to_r(18.24,1,39)
-# effectsize::F_to_r(7.14,1,33)
+## VEGA2021
+vega2021 <- read_csv("./raw_figextraction/suppls/Vega2021raw.csv")
+## plot the relationship between SR and the prop_green
+ggscatter(vega2021, y = "median_sr", x = "prop_green") + stat_cor(method = "spearman")
+ggscatter(vega2021, y = "median_sr", x = "median_conn") + stat_cor(method = "spearman")
+correlation(vega2021, select = c("median_sr"), select2 = c("prop_green", "median_conn"), method = "spearman")
+
+## WANG2013
+wang2013 <- read_csv("./raw_figextraction/suppls/Wang2013tabl1.csv")
+## scatterplot
+ggscatter(wang2013, y = "sr", x = "isolation1_km") + stat_cor(method = "pearson")
+correlation(wang2013, select = c("sr", "nestedrank_breeding", "nestedrank_wintering"), 
+                      select2 = c("isolation1_km", "isolation2_km"), method = "spearman", partial = F)
+
+## HUANG2015
+huang2015 <- read_csv("./raw_figextraction/suppls/Huang2015tabl1.csv")
+ggscatter(huang2015, y = "propgreen200m", x = "sr") + stat_cor(method = "spearman")
+correlation(huang2015, select = c("sr", "sr_omniv", "sr_insectiv", "sr_woodypl", "sr_grass", "sr_insects", "ab_insects"), 
+            select2 = c("propgreen200m"), method = "spearman", partial = F)
+
+## VIGNOLI2009
+vignoli2009 <- read_csv("./raw_figextraction/suppls/Vignoli2009suppl1raw.csv")
+ggscatter(vignoli2009, y = "n_amph", x = "dist_fromcore") + stat_cor(method = "spearman")
+ggscatter(vignoli2009, y = "n_rept", x = "dist_fromcore") + stat_cor(method = "spearman")
+correlation(vignoli2009, select = c("n_amph", "n_rept"), select2 = c("mean_ENN500m", "dist_fromcore",
+                                                                     "size_ha", "wooded_ha"), 
+            method = "spearman")
+cor(x = vignoli2009$n_amph, y = vignoli2009$dist_fromcore, method = "spearman")
+cor(x = vignoli2009$n_rept, y = vignoli2009$dist_fromcore, method = "spearman")
+
+## NATUHARA1999
+natuhara1999 <- read_csv("./raw_figextraction/suppls/Natuhara1999table1raw.csv")
+ggdensity(natuhara1999, x = "dist_ENLN")
+ggscatter(natuhara1999, y = "sr", x = "dist_ENLN") + stat_cor(method = "spearman")
+correlation(natuhara1999, select = c("sr"), select2 = c("dist_naturalarea", "dist_ENLN"), method = "spearman")
+
+## STILES2010
+stiles2010 <- read_csv("./raw_figextraction/suppls/Stiles2010supplraw.csv")
+ggscatter(stiles2010, y = "sr", x = "isolation") + stat_cor(method = "spearman")
+correlation(stiles2010, select = c("sr", "pl_density"), select2 = c("isolation"), method = "spearman")
+
+## NODA2022
+noda2022 <- read_csv("./raw_figextraction/suppls/Noda2022suppl2raw.csv")
+# sum together the values for 3-5
+noda2022 <- noda2022 %>% mutate(SR_total = rowSums(noda2022[,3:5])) %>% relocate(SR_total, .after = site) %>% 
+  rename(sr_grass = `number of grassland specialist species`, 
+         sr_native = `number of other native species`,
+         sr_alien = `number of alien species`)
+# plot each of the buffers together, 3 cols and 2 rows
+ggarrange(ggscatter(noda2022, y = "SR_total", x = "S_surrounding_buf100") + stat_cor(method = "spearman"),
+          ggscatter(noda2022, y = "SR_total", x = "S_surrounding_buf250") + stat_cor(method = "spearman"),
+          ggscatter(noda2022, y = "SR_total", x = "S_surrounding_buf500") + stat_cor(method = "spearman"),
+          ggscatter(noda2022, y = "SR_total", x = "S_surrounding_buf750") + stat_cor(method = "spearman"),
+          ggscatter(noda2022, y = "SR_total", x = "S_surrounding_buf1000") + stat_cor(method = "spearman"),
+          ggscatter(noda2022, y = "SR_total", x = "S_surrounding_buf1500") + stat_cor(method = "spearman"),
+          ncol = 3, nrow = 2)
+# extract the correlation coefficients 
+correlation(noda2022, select = c(colnames(noda2022[,3:6])), select2 = c(colnames(noda2022[,9:14])), method = "spearman")

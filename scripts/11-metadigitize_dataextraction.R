@@ -5,8 +5,9 @@
 ## https://www.rdocumentation.org/packages/metaDigitise/versions/1.0.1
 ## NOTE: ShinyDigitise requires the dev version of the package for certain kinds of figures
 ##
-remotes::install_github(repo = "EIvimeyCook/ShinyDigitise@6f1099e", force = TRUE)
-remotes::install_github(repo = "joelpick/metaDigitise", force = TRUE)
+#remotes::install_github(repo = "EIvimeyCook/ShinyDigitise@6f1099e", force = TRUE)
+#remotes::install_github("EIvimeyCook/ShinyDigitise")
+#remotes::install_github(repo = "joelpick/metaDigitise", force = TRUE)
 ##
 ## Author: Andrew Habrich
 ##

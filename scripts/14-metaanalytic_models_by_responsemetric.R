@@ -6,7 +6,7 @@
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2024-03-11
-## Date last Modified: 2024-04-14
+## Date last Modified: 2024-05-31
 ##
 ## Email: 
 ## - andrhabr@gmail.com
@@ -15,8 +15,8 @@
 ## Notes ---------------------------
 rm(list = ls())
 
-# install.packages('pacman')
-# devtools::install_github("daniel1noble/orchaRd", ref = "main", force = TRUE)
+#install.packages('pacman')
+#devtools::install_github("daniel1noble/orchaRd", ref = "main", force = TRUE)
 pacman::p_load(devtools, tidyverse, metafor, patchwork, R.rsp, orchaRd, emmeans,
                ape, phytools, flextable)
 
@@ -40,7 +40,7 @@ remove_accents <- function(x) {
 ## 2. Load data ---------------------
 es_dat <- read_csv("./data/13-effectsize_data.csv")
 ghs <- readxl::read_xlsx("./raw_data/ghsl/globalhumansettlement2019.xlsx")
-oecd <- read_csv("./raw_data/oecd/cityyear_oecd_manualmerge.csv", na = "na")
+#oecd <- read_csv("./raw_data/oecd/cityyear_oecd_manualmerge.csv", na = "na")
 
 ### remove accents from city names
 es_dat$City_clean <- remove_accents(es_dat$City)
@@ -76,39 +76,63 @@ cityghsl <- citieslist %>% left_join(ghs, by = c("City_clean" = "city", "Country
 cities <- left_join(cities, cityghsl, by = c("City_clean" = "City_clean", 
                                              "Country" = "Country"))
 ## merge columns from oecd to new cities dataframe, matched based on city and country and study year
-cities <- left_join(cities, oecd, by = c("City_clean" = "City_clean", 
-                                         "Country" = "Country", 
-                                         "Study_year" = "Study_year"))
+#cities <- left_join(cities, oecd, by = c("City_clean" = "City_clean", 
+#                                         "Country" = "Country", 
+#                                         "Study_year" = "Study_year"))
 
 ## remove columns that are not needed
 cities <- cities %>% select(-c(Pub_type, DOI, Study_effect, Conn_tool, r_method, corr_type,
                                mi, ri, ti, fi, pi, bi, var_sdi, var_type, R2i, 
                                country_code, xborder_country, urban_incity, UC_NM_SRC)) 
 
-# reverse the sign if the metric was dependent on 'impervious/developed surfaces' to be consistent with the other metrics
-cities <- cities %>% mutate(Conn_lcclass = ifelse(is.na(.$Conn_lcclass), "n/a", .$Conn_lcclass))
-cities$yi <- ifelse(cities$Conn_lcclass == "grey", cities$yi * -1, cities$yi)
-# combine taxa levels to create unique identifier
-cities <- cities %>% mutate(study_taxagroup = paste(Study_class, Study_order, Study_spec, sep = "-"))
-# convert latitude to absolute value
-cities <- cities %>% mutate(absLat = abs(lat))
-# remove rows with NA in absLat
-cities <- cities %>% filter(!is.na(absLat))
-
 ### FOR OECD data
 ## how many columns have missing values for urban green space and population density?
-cities %>% select(City_clean, Country, Study_year, urbarea_km2, hpd_km2, green_prop) %>% plot_missing()
-## what are those missing rows?
-cities %>% select(City_clean, Country, Study_year, urbarea_km2, hpd_km2, green_prop) %>% filter(is.na(urbarea_km2) | is.na(hpd_km2) | is.na(green_prop))
+# cities %>% select(City_clean, Country, Study_year, urbarea_km2, hpd_km2, green_prop) %>% plot_missing()
+# ## what are those missing rows?
+# cities %>% select(City_clean, Country, Study_year, urbarea_km2, hpd_km2, green_prop) %>% filter(is.na(urbarea_km2) | is.na(hpd_km2) | is.na(green_prop))
+# 
+# ## histograms of study year, urban area, human population density, and green space
+# cities %>% select(Study_year, urbarea_km2, hpd_km2, green_prop) %>% plot_histogram()
+# ## log transform the urban area, human population density, and green space and plot histograms
+# cities <- cities %>% mutate(urbarea_km2_log = log(urbarea_km2 + 1),
+#                             hpd_km2_log = log(hpd_km2 + 1),
+#                             green_prop_log = log(green_prop + 1))
+# cities %>% select(urbarea_km2_log, hpd_km2_log, green_prop_log) %>% plot_histogram()
 
-## histograms of study year, urban area, human population density, and green space
-cities %>% select(Study_year, urbarea_km2, hpd_km2, green_prop) %>% plot_histogram()
-## log transform the urban area, human population density, and green space and plot histograms
-cities <- cities %>% mutate(urbarea_km2_log = log(urbarea_km2 + 1),
-                            hpd_km2_log = log(hpd_km2 + 1),
-                            green_prop_log = log(green_prop + 1))
-cities %>% select(urbarea_km2_log, hpd_km2_log, green_prop_log) %>% plot_histogram()
-####
+### FOR GHSL data
+## What is the distribution of values (in a histogram) for the built-up area, population, and green space?
+cities <- cities %>% 
+  mutate(prop_green = area_km2/E_GR_AT14,
+         pop_dens = pop15/area_km2,
+         green15_km2 = area_km2 - built15_km2,
+         E_GR_AV14 = as.numeric(E_GR_AV14))
+cities %>% select(area_km2, built15_km2, pop15, BUCAP15, 
+                  E_GR_AT14, E_GR_AV14, prop_green, pop_dens, green15_km2) %>% plot_histogram()
+
+## What does the distribution look like if log-transformed?
+cities <- cities %>% 
+  mutate(area_km2_log = log(area_km2 + 1), 
+         built15_km2_log = log(built15_km2 + 1),
+         pop15_log = log(pop15 + 1),
+         BUCAP15_log = log(BUCAP15 + 1),
+         E_GR_AT14_log = log(E_GR_AT14 + 1),
+         prop_green_log = log(prop_green + 1),
+         pop_dens_log = log(pop_dens + 1),
+         green15_km2_log = log(green15_km2 + 1))
+cities %>% select(area_km2_log, built15_km2_log, pop15_log, BUCAP15_log, 
+                  E_GR_AT14_log, prop_green_log, pop_dens_log, green15_km2_log) %>% plot_histogram()
+
+### CONVERTING DIRECTION OF EFFECT SIZES FOR DIFFERENT METRICS TO BE CONSISTENT ###
+## what are the distinct lcclass types?
+cities %>% select(Conn_lcclass) %>% distinct()
+# for resist, inverse the relationship by multiplying yi by -1 to get permeability 
+cities <- cities %>% mutate(yi = ifelse(Conn_lcclass == "resist", yi*-1, yi)) 
+# for distance, inverse the relationship by multiplying yi by -1 to get proximity
+cities <- cities %>% mutate(yi = ifelse(Conn_lcclass == "dist", yi*-1, yi))
+# for dist-green, inverse the relationship by multiplying yi by -1 to get proximity
+cities <- cities %>% mutate(yi = ifelse(Conn_lcclass == "dist-green", yi*-1, yi))
+# for areas with grey, inverse the relationship by multiplying yi by -1 to get permeability
+cities <- cities %>% mutate(yi = ifelse(Conn_lcclass == "grey", yi*-1, yi))
 
 ### 2.2 Data exploration ----------------
 ### what is the number of unique studies?
@@ -140,6 +164,7 @@ cities %>%
 
 ### 2.3 SUBSET DATA ####
 ### Combine similar response metrics into a single category (e.g., species richness, abundance, etc.)
+cities <- cities %>% mutate(Study_class = ifelse(Study_class == "arthropoda", "insecta", Study_class))
 es_dat_pool <- cities %>%
   mutate(r_metric = case_when(
     str_detect(r_metric, "beta diversity|dissimilarity$") ~ "beta-diversity", #combine dissimilarity metrics
@@ -170,6 +195,7 @@ es_dat_max <- cities %>%
 ## 3. Meta-analytic model ----------------------------------------------------
 ### 3.0 global model; all response metrics; random effect models structure----
 # multi-level model (NOTE: These are identical ways of writing the formula)
+# group into list a compare model performances (aic fit stats)
 modMV0 <- rma.mv(yi = yi, V = vi, 
                     data = cities, method = "ML", test = "t")
 modMV1 <- rma.mv(yi = yi, V = vi, random = list(~ 1 | studyID,
@@ -179,19 +205,25 @@ modMV2 <- rma.mv(yi = yi, V = vi, random = ~ 1 | studyID,
                     data = cities, method = "ML", test = "t")
 modMV3 <- rma.mv(yi = yi, V = vi, random = ~ 1 | ES_no,
                     data = cities, method = "ML", test = "t")
+modMV4 <- rma.mv(yi = yi, V = vi, random = list(~ 1 | studyID,
+                                                ~ 1 | ES_no,
+                                                ~ 1 | study_taxagroup),
+                    data = cities, method = "ML", test = "t")
 
 #compare full random effects (ESid nested in studyID) to no random effects against no random effects
-metafor::anova.rma(modMV0, modMV1) 
-fitstats(modMV0, modMV1, modMV2, modMV3) #compare model AIC values
+metafor::anova.rma(modMV1, modMV4) 
+fitstats(modMV0, modMV1, modMV2, modMV3, modMV4) #compare model fit, move forward with lowest AIC
 
-## Generate a general model and check diagnostics
-modmv <- rma.mv(yi = yi, V = vi, 
-                mods = ~ factor(Study_class) -1,
+# ## Generate a general model and check diagnostics
+modmv <- rma.mv(yi = yi, V = vi,
                 random = list(~ 1 | studyID,
-                              ~ 1 | ES_no), 
-                data = es_dat_pool, method = "REML", test = "t", dfs = "contain", 
+                              ~ 1 | ES_no),
+                data = es_dat_pool, method = "REML", test = "t", dfs = "contain",
                 verbose =T)
 summary(modmv); funnel(modmv)
+i2_ml(modmv)
+r2_ml(modmv, data = es_dat_pool)
+mv_pro <- profile(modmv, progbar = T, plot = T, refline = T)
 
 # Generate a "global" model WITH all the moderator variables of interest
 modmvG <- rma.mv(yi = yi, V = vi,
@@ -200,21 +232,57 @@ modmvG <- rma.mv(yi = yi, V = vi,
                           factor(Conn_feat) +
                           absLat +
                           Pub_year+
-                          urbarea_km2_log +
-                          hpd_km2_log +
-                          green_prop_log -1,
+                          area_km2_log +
+                          pop_dens_log +
+                          E_GR_AV14 -1,
                 random = list(~ 1 | studyID,
                               ~ 1 | ES_no),
                 data = es_dat_pool, method = "REML", test = "t", dfs = "contain", verbose = T,
                 control = list(rel.tol = 1e-6))
 summary(modmvG)
 funnel(modmvG)
+i2_ml(modmvG); r2_ml(modmvG, data = es_dat_pool)
 profile(modmvG, progbar = T, plot = T)
 
+### Model with JUST the connectivity features
+modmvGg <- rma.mv(yi = yi, V = vi,
+                 mods = ~ factor(Conn_feat) -1,
+                 random = list(~ 1 | studyID,
+                               ~ 1 | ES_no),
+                 data = es_dat_pool, method = "REML", test = "t", dfs = "contain", verbose = T,
+                 control = list(rel.tol = 1e-6))
+summary(modmvGg)
+funnel(modmvGg)
+i2_ml(modmvGg); r2_ml(modmvGg, data = es_dat_pool)
+orchard_plot(modmvGg, 
+             mod = "Conn_feat",
+             condition.lab = "Connectivity feature", angle = 0,
+             xlab = "Correlation coefficient", transfm = "tanh", 
+             group = "studyID",  k = TRUE, g = TRUE, cb = T)
+
+modmvGh <- rma.mv(yi = yi, V = vi,
+                  mods = ~ factor(Study_class) -1,
+                  random = list(~ 1 | studyID,
+                                ~ 1 | ES_no),
+                  data = es_dat_pool, method = "REML", test = "t", dfs = "contain", verbose = T,
+                  control = list(rel.tol = 1e-6))
+summary(modmvGh)
+funnel(modmvGh)
+i2_ml(modmvGh); r2_ml(modmvGh, data = es_dat_pool)
+orchard_plot(modmvGh, 
+             mod = "Study_class",
+             condition.lab = "Taxonomic class", angle = 0,
+             xlab = "Correlation coefficient", transfm = "tanh", 
+             group = "studyID",  k = TRUE, g = TRUE, cb = T)
 ### 3.1 Global model set ----
 ## generate a set of models with different combinations of moderators
 ### check correlation of variables
-correlation(es_dat_pool %>% select(absLat, Pub_year, urbarea_km2_log, hpd_km2_log, green_prop_log)) #looks fine
+colnames(es_dat_pool)
+ggcorrplot::ggcorrplot(correlation(es_dat_pool %>% 
+                            select(absLat, Pub_year, urbarea_km2_log, hpd_km2_log, green_prop_log,
+                                   area_km2, elevavg_m, built15_km2, pop15, BUCAP15,
+                                   E_GR_AV14, E_GR_AL14, SDG_LUE9015,SDG_A2G14,SDG_OS15MX)), 
+                       type = "lower", lab = T, lab_size = 2) #some variables ARE correlated, only include non-redundant variables
 
 ## model set
 modmvNull0 <- rma.mv(yi = yi, V = vi, #null intercept model
@@ -429,41 +497,53 @@ bubble_plot(modmvGX, mod = "absLat", group = "studyID",
 bubble_plot(modmvGX, mod = "hpd_km2_log", group = "studyID",
             ylab = "Effect size Fisher's Z", xlab = "log(Human Pop. Density km2)")
 
-############################## SPECIES RICHNESS ################################
+####################### SPECIES RICHNESS ###############################
 es_dat_rich <- es_dat_pool %>% filter(r_metric == "species richness") %>% filter(!is.na(absLat))
 ## remove Conn_feat that have less than 3 entries
 es_dat_rich <- es_dat_rich %>% group_by(Conn_feat) %>% filter(n() >= 3) %>% ungroup()
 
+## check correlations of variables
+ggcorrplot::ggcorrplot(correlation(es_dat_rich %>% 
+                                     select(absLat, Pub_year, area_km2_log, pop_dens_log, green_prop_log,
+                                            elevavg_m, built15_km2, pop15, BUCAP15, E_GR_AV14, E_GR_AL14, SDG_LUE9015,SDG_A2G14,SDG_OS15MX)), 
+                       type = "lower", lab = T, lab_size = 2) #looks fine
+## plot correlation between absLat and E_GR_AV14
+ggplot(es_dat_rich, aes(x = absLat, y = E_GR_AV14)) + geom_point() + geom_smooth(method = "lm")
+
 ## generate a model for species richness
 mod_richA <- rma.mv(yi = yi, V = vi,
-                 mods = ~ factor(Conn_feat) + factor(Study_class) + urbarea_km2_log + hpd_km2_log + absLat -1,
+                 mods = ~ factor(Conn_feat) + factor(Study_class) + area_km2_log + pop_dens_log + absLat + E_GR_AV14 -1,
                  random = list(~ 1 | studyID,
                                ~ 1 | ES_no),
                  data = es_dat_rich, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_richB <- rma.mv(yi = yi, V = vi,
-                   mods = ~ factor(Conn_feat) + factor(Study_class) + hpd_km2_log + absLat -1,
+                   mods = ~ factor(Conn_feat) + factor(Study_class) + pop_dens_log + absLat + E_GR_AV14 -1,
                    random = list(~ 1 | studyID,
                                  ~ 1 | ES_no),
                    data = es_dat_rich, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_richC <- rma.mv(yi = yi, V = vi,
-                    mods = ~ factor(Conn_feat) + hpd_km2_log + absLat -1,
+                    mods = ~ factor(Conn_feat) + pop_dens_log + absLat + E_GR_AV14 -1,
                     random = list(~ 1 | studyID,
                                   ~ 1 | ES_no),
                     data = es_dat_rich, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_richD <- rma.mv(yi = yi, V = vi,
-                    mods = ~ factor(Study_class) + hpd_km2_log + absLat -1,
+                    mods = ~ factor(Study_class) + pop_dens_log + absLat + E_GR_AV14 -1,
                     random = list(~ 1 | studyID,
                                   ~ 1 | ES_no),
                     data = es_dat_rich, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_richE <- rma.mv(yi = yi, V = vi,
-                    mods = ~ factor(Conn_feat) -1,
+                    mods = ~ factor(Conn_feat) + E_GR_AV14 -1,
                     random = list(~ 1 | studyID,
                                   ~ 1 | ES_no),
                     data = es_dat_rich, method = "REML", test = "t", dfs = "contain", verbose = T)
-fitstats(mod_richA, mod_richB, mod_richC, mod_richD, mod_richE, REML = FALSE) #compare model AIC values
-
-funnel(mod_richE)
+mod_richF <- rma.mv(yi = yi, V = vi,
+                    mods = ~ factor(Study_class) + E_GR_AV14 -1,
+                    random = list(~ 1 | studyID,
+                                  ~ 1 | ES_no),
+                    data = es_dat_rich, method = "REML", test = "t", dfs = "contain", verbose = T)
+fitstats(mod_richA, mod_richB, mod_richC, mod_richD, mod_richE, mod_richF, REML = F) #compare model AIC values
 summary(mod_richE)
+funnel(mod_richE)
 r2_ml(mod_richE, data = es_dat_rich)
 i2_ml(mod_richE)
 
@@ -471,16 +551,14 @@ orchard_plot(mod_richB,
              mod = "Study_class",
              condition.lab = "Taxon class", angle = 45,
              xlab = "Correlation coefficient", transfm = "tanh", 
-             group = "studyID",  k = TRUE, g = TRUE)
+             group = "studyID",  k = TRUE, g = TRUE, cb = T)
 orchard_plot(mod_richE, 
              mod = "Conn_feat",
              condition.lab = "Conn. feature", angle = 0,
              xlab = "Correlation coefficient", transfm = "tanh", 
              group = "studyID",  k = TRUE, g = TRUE)
-bubble_plot(mod_richC, mod = "hpd_km2_log", group = "studyID",
-            ylab = "Effect size Fisher's Z", xlab = "log(Human Pop. Density km2)")
-bubble_plot(mod_richC, mod = "absLat", group = "studyID",
-            ylab = "Effect size Fisher's Z", xlab = "Absolute Latitude")
+bubble_plot(mod_richE, mod = "E_GR_AV14", group = "studyID",
+            ylab = "Effect size Fisher's Z", xlab = "Avg. Greeness index")
 
 ############################## ABUNDANCE ################################
 es_dat_abun <- es_dat_pool %>% filter(r_metric == "abundance") %>% filter(!is.na(absLat))
@@ -488,102 +566,126 @@ es_dat_abun <- es_dat_pool %>% filter(r_metric == "abundance") %>% filter(!is.na
 es_dat_abun <- es_dat_abun %>% group_by(Conn_feat) %>% filter(n() >= 3) %>% ungroup()
 
 ## generate a model for abundance
-mod_abunA <- rma.mv(yi = yi, V = vi, struc = "UN",
-                 mods = ~ factor(Conn_feat) + factor(Study_class) + urbarea_km2_log + hpd_km2_log + absLat -1,
+mod_abunA <- rma.mv(yi = yi, V = vi,
+                 mods = ~ factor(Conn_feat) + factor(Study_class) + area_km2_log + pop_dens_log + absLat + E_GR_AV14 -1,
                  random = list(~ 1 | studyID,
                                ~ 1 | ES_no),
                  data = es_dat_abun, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_abunB <- rma.mv(yi = yi, V = vi,
-                   mods = ~ factor(Conn_feat) + factor(Study_class) + hpd_km2_log + absLat -1,
+                   mods = ~ factor(Conn_feat) + factor(Study_class) + pop_dens_log + absLat + E_GR_AV14 -1,
                    random = list(~ 1 | studyID,
                                  ~ 1 | ES_no),
                    data = es_dat_abun, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_abunC <- rma.mv(yi = yi, V = vi,
-                    mods = ~ factor(Conn_feat) + hpd_km2_log + absLat -1,
+                    mods = ~ factor(Conn_feat) + pop_dens_log + absLat + E_GR_AV14 -1,
                     random = list(~ 1 | studyID,
                                   ~ 1 | ES_no),
                     data = es_dat_abun, method = "REML", test = "t", dfs = "contain", verbose = T)
-fitstats(mod_abunA, mod_abunB, mod_abunC, REML = FALSE) #compare model AIC values
-funnel(mod_abunC)
-summary(mod_abunC)
-r2_ml(mod_abunC, data = es_dat_abun)
-i2_ml(mod_abunC)
+mod_abunD <- rma.mv(yi = yi, V = vi,
+                    mods = ~ factor(Study_class) + pop_dens_log + absLat + E_GR_AV14 -1,
+                    random = list(~ 1 | studyID,
+                                  ~ 1 | ES_no),
+                    data = es_dat_abun, method = "REML", test = "t", dfs = "contain", verbose = T)
+mod_abunE <- rma.mv(yi = yi, V = vi,
+                    mods = ~ factor(Conn_feat) + E_GR_AV14 -1,
+                    random = list(~ 1 | studyID,
+                                  ~ 1 | ES_no),
+                    data = es_dat_abun, method = "REML", test = "t", dfs = "contain", verbose = T)
+mod_abunF <- rma.mv(yi = yi, V = vi,
+                    mods = ~ factor(Study_class) + E_GR_AV14 -1,
+                    random = list(~ 1 | studyID,
+                                  ~ 1 | ES_no),
+                    data = es_dat_abun, method = "REML", test = "t", dfs = "contain", verbose = T)
+mod_abunG <- rma.mv(yi = yi, V = vi,
+                    mods = ~ factor(Study_class) -1,
+                    random = list(~ 1 | studyID,
+                                  ~ 1 | ES_no),
+                    data = es_dat_abun, method = "REML", test = "t", dfs = "contain", verbose = T)
+fitstats(mod_abunA, mod_abunB, mod_abunC, mod_abunD, mod_abunE, mod_abunF, mod_abunG, REML = F) #compare model AIC values
+funnel(mod_abunF)
+summary(mod_abunF)
+r2_ml(mod_abunB, data = es_dat_abun)
+i2_ml(mod_abunB)
 
-orchard_plot(mod_abunB, 
+orchard_plot(mod_abunF, 
              mod = "Study_class",
              condition.lab = "Taxon class", angle = 45,
              xlab = "Correlation coefficient", transfm = "tanh", 
-             group = "ES_no",  k = TRUE, g = TRUE)
-orchard_plot(mod_abunC, 
-             mod = "Conn_feat",
-             condition.lab = "Conn. feature", angle = 0,
-             xlab = "Correlation coefficient", transfm = "tanh", 
-             group = "ES_no",  k = TRUE, g = TRUE)
-bubble_plot(mod_abunC, mod = "hpd_km2_log", group = "studyID", transfm = "tanh",
-            ylab = "Effect size Fisher's Z", xlab = "log(Human Pop. Density km2)")
-bubble_plot(mod_abunC, mod = "absLat", group = "studyID", transfm = "tanh",
-            ylab = "Effect size Fisher's Z", xlab = "Absolute Latitude")
+             group = "studyID",  k = TRUE, g = TRUE)
 
-############################### OCCURRENCE ################################
-es_dat_occ <- es_dat_pool %>% filter(r_metric == "occurrence") %>% filter(!is.na(absLat)) %>%
-  filter(Study_class != "arthropoda") ## temporarily remove arthropods since it is a strange category
+bubble_plot(mod_abunF, mod = "E_GR_AV14", group = "studyID", transfm = "tanh",
+            ylab = "Effect size Fisher's Z", xlab = "Avg. greeness index")
+
+################################ OCCURRENCE ################################
+es_dat_occ <- es_dat_pool %>% filter(r_metric == "occurrence") %>% filter(!is.na(absLat))
 ## remove Conn_feat that have less than 3 entries
 es_dat_occ <- es_dat_occ %>% group_by(Conn_feat) %>% filter(n() >= 3) %>% ungroup()
 
 ## generate a model for occurrence
 mod_occA <- rma.mv(yi = yi, V = vi,
-                 mods = ~ factor(Conn_feat) + factor(Study_class) + urbarea_km2_log + hpd_km2_log + absLat -1,
+                 mods = ~ factor(Conn_feat) + factor(Study_class) + area_km2_log + pop_dens_log + absLat + E_GR_AV14 -1,
                  random = list(~ 1 | studyID,
                                ~ 1 | ES_no),
                  data = es_dat_occ, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_occB <- rma.mv(yi = yi, V = vi,
-                   mods = ~ factor(Conn_feat) + factor(Study_class) + hpd_km2_log + absLat -1,
+                   mods = ~ factor(Conn_feat) + factor(Study_class) + pop_dens_log + absLat + E_GR_AV14 -1,
                    random = list(~ 1 | studyID,
                                  ~ 1 | ES_no),
                    data = es_dat_occ, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_occC <- rma.mv(yi = yi, V = vi,
-                    mods = ~ factor(Conn_feat) + hpd_km2_log + absLat -1,
+                    mods = ~ factor(Conn_feat) + pop_dens_log + absLat + E_GR_AV14 -1,
                     random = list(~ 1 | studyID,
                                   ~ 1 | ES_no),
                     data = es_dat_occ, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_occD <- rma.mv(yi = yi, V = vi,
-                   mods = ~ factor(Conn_feat) + factor(Study_class) -1,
+                   mods = ~ factor(Conn_feat) + factor(Study_class) + E_GR_AV14 -1,
                    random = list(~ 1 | studyID,
                                  ~ 1 | ES_no),
                    data = es_dat_occ, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_occE <- rma.mv(yi = yi, V = vi,
-                   mods = ~ factor(Conn_feat) -1,
+                   mods = ~ factor(Conn_feat) + E_GR_AV14 -1,
                    random = list(~ 1 | studyID,
                                  ~ 1 | ES_no),
                    data = es_dat_occ, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_occF <- rma.mv(yi = yi, V = vi,
-                   mods = ~ factor(Study_class) -1,
+                   mods = ~ factor(Study_class) + E_GR_AV14 -1,
                    random = list(~ 1 | studyID,
                                  ~ 1 | ES_no),
                    data = es_dat_occ, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_occG <- rma.mv(yi = yi, V = vi,
-                   mods = ~ urbarea_km2_log + hpd_km2_log + absLat -1,
+                   mods = ~ factor(Study_class) -1,
                    random = list(~ 1 | studyID,
                                  ~ 1 | ES_no),
                    data = es_dat_occ, method = "REML", test = "t", dfs = "contain", verbose = T)
+mod_occH<- rma.mv(yi = yi, V = vi,
+                   mods = ~ factor(Conn_feat) -1,
+                   random = list(~ 1 | studyID,
+                                 ~ 1 | ES_no),
+                   data = es_dat_occ, method = "REML", test = "t", dfs = "contain", verbose = T)
+mod_occX<- rma.mv(yi = yi, V = vi,
+                  mods = ~ E_GR_AV14,
+                  random = list(~ 1 | studyID,
+                                ~ 1 | ES_no),
+                  data = es_dat_occ, method = "REML", test = "t", dfs = "contain", verbose = T)
 
-fitstats(mod_occA, mod_occB, mod_occC, mod_occD, mod_occE, mod_occF, mod_occG, REML = FALSE) #compare model AIC values
-funnel(mod_occD)
-model_performance(mod_occD)
-summary(mod_occD)
-r2_ml(mod_occD, data = es_dat_occ)
-i2_ml(mod_occC)
+fitstats(mod_occA, mod_occB, mod_occC, mod_occD, mod_occE, mod_occF, mod_occG, mod_occH, mod_occX, REML = FALSE) #compare model AIC values
+funnel(mod_occF)
+summary(mod_occF)
+r2_ml(mod_occF, data = es_dat_occ)
+i2_ml(mod_occF)
 
 orchard_plot(mod_occD, 
              mod = "Conn_feat",
              condition.lab = "Conn. feature", angle = 0,
              xlab = "Correlation coefficient", transfm = "tanh", 
              group = "studyID",  k = TRUE, g = TRUE)
-orchard_plot(mod_occD, 
+orchard_plot(mod_occF, 
              mod = "Study_class",
              condition.lab = "Conn. feature", angle = 0,
              xlab = "Correlation coefficient", transfm = "tanh", 
              group = "studyID",  k = TRUE, g = TRUE)
+bubble_plot(mod_occF, mod = "E_GR_AV14", group = "studyID", transfm = "tanh",
+            ylab = "Effect size Fisher's Z", xlab = "Avg. greeness index")
 
 ################################ GENETIC DISTANCE ################################
 es_dat_gen <- es_dat_pool %>% filter(r_metric == "genetic dist.") %>% filter(!is.na(absLat))
@@ -592,38 +694,43 @@ es_dat_gen <- es_dat_gen %>% group_by(Conn_feat) %>% filter(n() >= 3) %>% ungrou
 
 ## generate a model for genetic distance
 mod_genA <- rma.mv(yi = yi, V = vi,
-                 mods = ~ factor(Conn_feat) + factor(Study_class) + urbarea_km2_log + hpd_km2_log + absLat -1,
+                 mods = ~ factor(Conn_feat) + factor(Study_class) + area_km2_log + pop_dens_log + absLat + E_GR_AV14 -1,
                  random = list(~ 1 | studyID,
                                ~ 1 | ES_no),
                  data = es_dat_gen, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_genB <- rma.mv(yi = yi, V = vi,
-                   mods = ~ factor(Conn_feat) + factor(Study_class) + hpd_km2_log + absLat -1,
+                   mods = ~ factor(Conn_feat) + factor(Study_class) + pop_dens_log + absLat + E_GR_AV14 -1,
                    random = list(~ 1 | studyID,
                                  ~ 1 | ES_no),
                    data = es_dat_gen, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_genC <- rma.mv(yi = yi, V = vi,
-                    mods = ~ factor(Conn_feat) + hpd_km2_log + absLat -1,
+                    mods = ~ factor(Conn_feat) + pop_dens_log + absLat + E_GR_AV14 -1,
                     random = list(~ 1 | studyID,
                                   ~ 1 | ES_no),
                     data = es_dat_gen, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_genD <- rma.mv(yi = yi, V = vi,
-                   mods = ~ factor(Conn_feat) + factor(Study_class) -1,
+                   mods = ~ factor(Conn_feat) + factor(Study_class) + E_GR_AV14 -1,
                    random = list(~ 1 | studyID,
                                  ~ 1 | ES_no),
                    data = es_dat_gen, method = "REML", test = "t", dfs = "contain", verbose = T)
 mod_genE <- rma.mv(yi = yi, V = vi,
+                   mods = ~ factor(Conn_feat) + E_GR_AV14 -1,
+                   random = list(~ 1 | studyID,
+                                 ~ 1 | ES_no),
+                   data = es_dat_gen, method = "REML", test = "t", dfs = "contain", verbose = T)
+mod_genF <- rma.mv(yi = yi, V = vi,
                    mods = ~ factor(Conn_feat) -1,
                    random = list(~ 1 | studyID,
                                  ~ 1 | ES_no),
                    data = es_dat_gen, method = "REML", test = "t", dfs = "contain", verbose = T)
 
-fitstats(mod_genA, mod_genB, mod_genC, mod_genD, mod_genE, REML = FALSE) #compare model AIC values
-funnel(mod_genE)
-summary(mod_genE)
-r2_ml(mod_genE, data = es_dat_gen)
-i2_ml(mod_genE)
+fitstats(mod_genA, mod_genB, mod_genC, mod_genD, mod_genE, mod_genF, REML = FALSE) #compare model AIC values
+funnel(mod_genF)
+summary(mod_genF)
+r2_ml(mod_genF, data = es_dat_gen)
+i2_ml(mod_genF)
 
-orchard_plot(mod_genE, 
+orchard_plot(mod_genF, 
              mod = "Conn_feat",
              condition.lab = "Taxon class", angle = 45,
              xlab = "Correlation coefficient", transfm = "tanh", 
@@ -634,38 +741,53 @@ orchard_plot(mod_genE,
 mod_summary <- data.frame(
   response_metric = c("species richness", "abundance", "occurrence", "genetic dist."),
   model_formula = c(deparse(formula(mod_richE)[[2]]), 
-                    deparse(formula(mod_abunC)[[2]]), 
-                    deparse(formula(mod_occD)[[2]]), 
-                    deparse(formula(mod_genE)[[2]])
+                    deparse(formula(mod_abunF)[[2]]), 
+                    deparse(formula(mod_occF)[[2]]), 
+                    deparse(formula(mod_genF)[[2]])
   ))
 ## add new columns for model fit R2 marginal and conditional and I2 per response metric
 mod_summary <- mod_summary %>%
   mutate(R2_marginal = c(r2_ml(mod_richE)[1],
-                         r2_ml(mod_abunC)[1],
-                         r2_ml(mod_occD)[1],
+                         r2_ml(mod_abunF)[1],
+                         r2_ml(mod_occF)[1],
                          r2_ml(mod_genE)[1]),
          R2_conditional = c(r2_ml(mod_richE)[2],
-                            r2_ml(mod_abunC)[2],
-                            r2_ml(mod_occD)[2],
+                            r2_ml(mod_abunF)[2],
+                            r2_ml(mod_occF)[2],
                             r2_ml(mod_genE)[2]),
          I2total = c(i2_ml(mod_richE)[1],
-                     i2_ml(mod_abunC)[1],
-                     i2_ml(mod_occD)[1],
+                     i2_ml(mod_abunF)[1],
+                     i2_ml(mod_occF)[1],
                      i2_ml(mod_genE)[1]),
          I2between = c(i2_ml(mod_richE)[2],
-                      i2_ml(mod_abunC)[2],
-                      i2_ml(mod_occD)[2],
+                      i2_ml(mod_abunF)[2],
+                      i2_ml(mod_occF)[2],
                       i2_ml(mod_genE)[2]),
          I2within = c(i2_ml(mod_richE)[3],
-                      i2_ml(mod_abunC)[3],
-                      i2_ml(mod_occD)[3],
+                      i2_ml(mod_abunF)[3],
+                      i2_ml(mod_occF)[3],
                       i2_ml(mod_genE)[3])
   )
 
 model_performance(mod_richE, data = es_dat_rich, metrics = "all", estimator = "REML")
-model_performance(mod_abunC, data = es_dat_abun, metrics = "all", estimator = "REML")
+model_performance(mod_abunF, data = es_dat_abun, metrics = "all", estimator = "REML")
 model_performance(mod_occD, data = es_dat_occ, metrics = "all", estimator = "REML")
 model_performance(mod_genE, data = es_dat_gen, metrics = "all", estimator = "REML")
+
+orchard_plot(mod_richE, 
+             mod = "Conn_feat",
+             condition.lab = "Conn. feature", angle = 0,
+             xlab = "Correlation coefficient", transfm = "tanh", 
+             group = "studyID",  k = TRUE, g = TRUE)
+bubble_plot(mod_richE, mod = "E_GR_AV14", group = "studyID", transfm = "tanh",
+            ylab = "Effect size Fisher's Z", xlab = "Avg. greeness index")
+orchard_plot(mod_abunF, 
+             mod = "Study_class",
+             condition.lab = "Conn. feature", angle = 0,
+             xlab = "Correlation coefficient", transfm = "tanh", 
+             group = "studyID",  k = TRUE, g = TRUE)
+bubble_plot(mod_abunF, mod = "E_GR_AV14", group = "studyID", transfm = "tanh",
+            ylab = "Effect size Fisher's Z", xlab = "Avg. greeness index")
 
 ## TODO ####
 # robust estimates of parameters
