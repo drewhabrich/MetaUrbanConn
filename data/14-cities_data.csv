@@ -1,0 +1,88 @@
+City_clean,Country,lat,long
+Cordoba,Argentina,-31.39589028,-64.20712883
+Mar del Plata,Argentina,-38.00776575,-57.57362105
+Buenos Aires,Argentina,-34.65058344,-58.53886524
+Brisbane,Australia,-27.49018691,153.0489651
+Sydney,Australia,-33.85123993,151.0668102
+Perth,Australia,-31.94517038,115.8451125
+Melbourne,Australia,-37.85556174,145.0747051
+Victoria,Australia,NA,NA
+Salzburg,Austria,47.80303436,13.03663574
+Vienna,Austria,48.19840819,16.38397587
+Brussels,Belgium,50.84995677,4.370280821
+Salvador,Brazil,-12.92433867,-38.42545334
+Florianopolis,Brazil,-27.59519191,-48.61715306
+Vila Velha,Brazil,-20.32801679,-40.3508252
+Sao Paulo,Brazil,-23.57275267,-46.59943039
+Rio Branco,Brazil,-9.967801296,-67.82228556
+Curitiba,Brazil,-25.44276336,-49.26146328
+Joao Pessoa,Brazil,-7.145364178,-34.87174461
+Goiania,Brazil,-16.71153307,-49.28015866
+Brasilia,Brazil,-15.768422,-47.88150565
+Vancouver,Canada,49.2292552,-122.9851417
+Victoria,Canada,48.4509848,-123.3612509
+Montreal,Canada,45.53269003,-73.66822949
+Edmonton,Canada,53.54200131,-113.4855766
+Calgary,Canada,51.039687,-114.0703599
+Beijing,China,39.89899941,116.3498742
+Hangzhou,China,30.22283817,120.3168158
+Nanjing,China,32.01271314,118.8093005
+Wuhan,China,30.55372322,114.2947295
+Shanghai,China,31.19249624,121.4271278
+San Jose,Costa Rica,9.951750245,-84.11429303
+Turku,Finland,60.45004137,22.2436126
+Helsinki,Finland,60.22358683,24.93691625
+Marseille,France,43.30069617,5.407161707
+Rennes,France,48.11255158,-1.663433216
+Paris,France,48.83990462,2.322010194
+Brunswick,Germany,52.26976525,10.52497596
+Berlin,Germany,52.50695177,13.40979396
+Hamburg,Germany,53.57410427,9.993622262
+Munich,Germany,48.13800202,11.56343509
+Rome,Italy,41.89715399,12.53231298
+Milan,Italy,45.54463407,9.1899412
+Tokyo,Japan,35.68148131,139.649416
+Osaka [Kyoto],Japan,34.70012803,135.4198332
+Sapporo,Japan,43.07052122,141.3738144
+Chetumal,Mexico,18.519894270000002,-88.30280762
+Mexico city,Mexico,NA,NA
+Dunedin,New Zealand,-45.8810598,170.4983027
+Oslo,Norway,59.90823209,10.74324845
+Quezon City [Manila],Philippines,14.55191389,121.0191782
+Warsaw,Poland,52.22529923,20.99571251
+Lublin,Poland,51.23850451,22.56071837
+Cape Town,South Africa,-33.94764796,18.57842297
+Johannesburg,South Africa,-26.17977081,28.05553562
+Durban,South Africa,-29.78780375,31.01235218
+Cheonan-si,South Korea,36.83054952,127.1423916
+Seoul,South Korea,37.47555477,126.9243735
+Madrid,Spain,40.40404665,-3.708166287
+Valencia,Spain,39.48043152,-0.407237737
+Barcelona,Spain,41.41556989,2.171428026
+Malmo,Sweden,55.59550083,13.00774691
+Stockholm,Sweden,59.33157275,18.00055029
+Zurich,Switzerland,47.35646431,8.561740229
+New Taipei [Taipei],Taiwan,25.00684104,121.4128047
+Birmingham,United Kingdom,52.51213812,-1.965490369
+Sheffield,United Kingdom,53.388841,-1.417890387
+Dundee,United Kingdom,56.47408546,-2.939978337
+"Milton Keynes, Bedford, Luton",United Kingdom,NA,NA
+Milton Keynes,United Kingdom,52.03519318,-0.768073013
+Luton,United Kingdom,51.89676351,-0.454396779
+Bedford,United Kingdom,52.13578937,-0.459769497
+St. Louis,United States,38.64866335,-90.29516847
+Chicago,United States,41.79396274,-87.82253727
+Washington D.C.,United States,38.9228404,-77.14196317
+Thousand Oaks,United States,34.18196155,-118.8641047
+Cleveland,United States,41.47505094,-81.64622338
+Denver,United States,39.72837393,-104.9803877
+Tijuana,United States,32.82158244,-117.1106947
+Phoenix,United States,33.47756006,-112.0005369
+Bedford,United States,NA,NA
+New York,United States,40.77321423,-73.88090455
+Las Cruces,United States,32.31146516,-106.7696567
+Los Angeles,United States,33.95381355,-117.9539253
+Seattle,United States,47.49542197,-122.2998149
+San Jose,United States,37.32711544,-121.9332989
+Charlotte,United States,35.19478888,-80.8479022
+Buffalo,United States,42.9237412,-78.81130882
