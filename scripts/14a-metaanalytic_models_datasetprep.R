@@ -86,35 +86,68 @@ cities <- cities %>% select(-c(Pub_type, DOI, Study_effect, Conn_tool, r_method,
                                country_code, xborder_country, urban_incity, UC_NM_SRC)) 
 
 ### FOR GHSL data
+## How many studies (grouped by studyID) are have a study year in 3 bins: before 1991, within 1992-2013, and after 2014? Plot in a bar graph
+cities %>% group_by(studyID) %>% 
+  mutate(study_year_bin = case_when(Study_year < 1999 ~ "before 1999",
+                                    Study_year >= 2000 & Study_year <= 2013 ~ "2000-2013",
+                                    Study_year > 2014 ~ "after 2014")) %>% 
+  count(study_year_bin) %>% 
+  ggplot(aes(x = study_year_bin, y = n, fill = study_year_bin)) +
+  geom_bar(stat = "identity") +
+  theme_minimal() +
+  labs(title = "Number of studies by study year",
+       x = "Study year",
+       y = "Number of studies") +
+  theme(legend.position = "none")
+
+cities <- cities %>% group_by(studyID) %>% 
+  mutate(study_year_bin = case_when(Study_year <= 1999 ~ "before 1999",
+                                    Study_year >= 2000 & Study_year <= 2013 ~ "2000-2013",
+                                    Study_year >= 2014 ~ "after 2014")) %>% ungroup()
+
+## create a new greenness column matching the study_yearbin to the appropriate column
+cities <- cities %>% mutate(green_avg = case_when(study_year_bin == "before 1999" ~ E_GR_AV90,
+                                                  study_year_bin == "2000-2013" ~ E_GR_AV00,
+                                                  study_year_bin == "after 2014" ~ E_GR_AV14),
+                            green_km2 = case_when(study_year_bin == "before 1999" ~ E_GR_AT90,
+                                                  study_year_bin == "2000-2013" ~ E_GR_AT00,
+                                                  study_year_bin == "after 2014" ~ E_GR_AT14),
+                            built_km2 = case_when(study_year_bin == "before 1999" ~ built90_km2,
+                                                  study_year_bin == "2000-2013" ~ built00_km2,
+                                                  study_year_bin == "after 2014" ~ built15_km2),
+                            pop_km2 = case_when(study_year_bin == "before 1999" ~ pop90,
+                                                  study_year_bin == "2000-2013" ~ pop00,
+                                                  study_year_bin == "after 2014" ~ pop15)) 
 ## create new columns for city variables
 cities <- cities %>% 
   mutate(absLat = abs(lat),
-         prop_green = area_km2/E_GR_AT14,
-         pop_dens = pop15/area_km2,
-         green15_km2 = area_km2 - built15_km2,
-         E_GR_AV14 = as.numeric(E_GR_AV14))
+         prop_green = area_km2/green_km2,
+         pop_dens = pop_km2/area_km2,
+         greenbuiltratio = green_km2/built15_km2,
+         green_avg = as.numeric(green_avg))
 
-## log transform some of the city bariables
+## log transform some of the city variables
 cities <- cities %>% 
   mutate(area_km2_log = log(area_km2 + 1), 
-         built15_km2_log = log(built15_km2 + 1),
-         pop15_log = log(pop15 + 1),
-         BUCAP15_log = log(BUCAP15 + 1),
-         E_GR_AT14_log = log(E_GR_AT14 + 1),
+         built_km2_log = log(built_km2 + 1),
+         pop_km2 = log(pop_km2 + 1),
+         green_km2_log = log(green_km2 + 1),
          prop_green_log = log(prop_green + 1),
-         pop_dens_log = log(pop_dens + 1),
-         green15_km2_log = log(green15_km2 + 1))
+         pop_dens_log = log(pop_dens + 1))
 
 ## what are the unique cities? extract the lat long too
 cities %>% select(City_clean, Country, lat, long) %>% distinct() %>% arrange(Country)
 ## save to a csv file. uncomment to save
-# write_csv(cities %>% select(City_clean, Country, lat, long) %>% distinct() %>% arrange(Country),
+#write_csv(cities %>% select(City_clean, Country, lat, long) %>% distinct() %>% arrange(Country),
 #          "./data/14-cities_data.csv")
 
 ### 2.2 Convert for consistent direction of effect sizes ####
+## for genetic dist. inverse the relationship by multiplying yi by -1 to get genetic similarity and rename values to genetic similarity
+cities <- cities %>% mutate(yi = ifelse(r_metric == "genetic dist.", yi*-1, yi)) %>% 
+  mutate(r_metric = str_replace(r_metric, "genetic dist.", "genetic similarity"))
+
 ## what are the distinct lcclass types?
 cities %>% select(Conn_lcclass) %>% distinct()
-
 # for resist, inverse the relationship by multiplying yi by -1 to get permeability 
 cities <- cities %>% mutate(yi = ifelse(Conn_lcclass == "resist", yi*-1, yi)) 
 # for distance, inverse the relationship by multiplying yi by -1 to get proximity to sites
@@ -176,6 +209,16 @@ es_dat_pool %>% count(r_metric) %>% arrange(desc(n))
 ### CLEANUP ENVIRONMENT ####
 rm(list = c("es_dat", "cityghsl", "citieslist", "ghsl", "cityage", "cities",
             "es_dat_agg1", "es_dat_agg2", "agg1", "agg2", "agg3", "agg4", "agg5"))
+
+### remove unnecessary columns from the dataset before saving to file
+str(es_dat_pool)
+es_dat_pool <- es_dat_pool %>% select(-c(quality, H75_AREAkm2, H90_AREAkm2, H00_AREAkm2, 
+                                         built75_km2, built90_km2, built00_km2, built15_km2,
+                                         pop75, pop90, pop00, pop15, BUCAP75, BUCAP90, BUCAP00, BUCAP15,
+                                         E_GR_AV90, E_GR_AV00, E_GR_AV14, SDG_LUE9015, SDG_A2G14, SDG_OS15MX,
+                                         E_GR_AT90, E_GR_AT00, E_GR_AT14, E_GR_AH90, E_GR_AH00, E_GR_AH14,
+                                         E_GR_AM90, E_GR_AM00, E_GR_AM14,E_GR_AL90, E_GR_AL00, E_GR_AL14,
+                                         study_year_bin))
 
 # save to csv ######
 write_csv(es_dat_pool, "./data/14-effectsize_data_pooled.csv")
