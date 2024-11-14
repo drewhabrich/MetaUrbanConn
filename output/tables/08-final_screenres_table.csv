@@ -1,0 +1,6 @@
+INCLUDE,count,percentage,summary
+NOtitle,3570,55.16921650440426,"Excluded based title, no indication of either urban/city or connectivity assessed"
+NOabstr,1125,17.385257301808068,"Excluded based on abstract, either not urban/city or no metric of connectivity"
+MAYBE,795,12.285581826611033,"Unclear eligibility, needs full text screening"
+REVIEW,501,7.742234585071859,Review/Methodology/Framework articles
+YES,480,7.417709782104776,Candidate studies identified
