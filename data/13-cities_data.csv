@@ -44,8 +44,8 @@ Milan,Italy,45.54463407,9.1899412
 Tokyo,Japan,35.68148131,139.649416
 Osaka [Kyoto],Japan,34.70012803,135.4198332
 Sapporo,Japan,43.07052122,141.3738144
-Chetumal,Mexico,18.519894270000002,-88.30280762
-Mexico city,Mexico,NA,NA
+Chetumal,Mexico,18.51989427,-88.30280762
+Mexico City,Mexico,19.45159,-99.1056
 Dunedin,New Zealand,-45.8810598,170.4983027
 Oslo,Norway,59.90823209,10.74324845
 Quezon City [Manila],Philippines,14.55191389,121.0191782
@@ -66,7 +66,7 @@ New Taipei [Taipei],Taiwan,25.00684104,121.4128047
 Birmingham,United Kingdom,52.51213812,-1.965490369
 Sheffield,United Kingdom,53.388841,-1.417890387
 Dundee,United Kingdom,56.47408546,-2.939978337
-"Milton Keynes, Bedford, Luton",United Kingdom,NA,NA
+"Milton Keynes, Bedford, Luton",United Kingdom,51.89676,-0.4543968
 Milton Keynes,United Kingdom,52.03519318,-0.768073013
 Luton,United Kingdom,51.89676351,-0.454396779
 Bedford,United Kingdom,52.13578937,-0.459769497

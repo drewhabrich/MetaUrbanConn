@@ -1,0 +1,9 @@
+(
+(urban* OR "urban* area*" OR "urban* landscap*" OR citi* OR town*) AND 
+
+(biodivers* OR wildlif* OR veget* OR plant* OR tree* OR bird* OR avian* OR arthropod* OR insect* OR mammal* OR herptil* OR reptil* OR amphibian*) AND 
+
+(connect* OR "landscap* connect*" OR "function* connect*" OR "structur* connect*" OR "habitat* connect*" OR "ecolog* connect*" OR "habitat* network*" OR "ecolog* network*" OR corridor* OR "habitat* corridor*" OR "ecolog* corridor*" OR least-cost* OR "least* cost*" OR "circuit* theori*" OR circuit-theori* OR "landscap* resist*" OR "landscap* permeabl*") AND 
+
+(occup* OR occurr* OR abund* OR "speci* rich*" OR divers* OR "speci* respons*" OR "genet* divers*" OR "gene* flow*" OR "speci* distribut*" OR "speci* densiti*" OR "speci* composit*" OR "speci* assemblag*" OR "communiti* composit*" OR "communiti* assemblag*" OR "popul* persist*" OR "popul* respons*" OR "distribut* pattern*" OR "spatial* distribut*" OR movement* OR dispers*)
+)
