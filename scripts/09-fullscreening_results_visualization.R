@@ -1,5 +1,5 @@
 ## HEADER---------------------------
-## Script name: fullscreening results and visualization of results
+## Script name: 09-fullscreening results and visualization of results
 ##
 ## Purpose of script: Take a look at the patterns of the initial results after full-screening all the (YES) entries
 ## identified in previous screening steps
@@ -7,27 +7,21 @@
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-07-12
+## Date last modified: 2024-11-14
 ##
 ## Email: 
 ## - andrhabr@gmail.com
 ## - andrewhabrich@cmail.carleton.ca
 ## 
 ## Notes ---------------------------
-## > THIS IS JUST THE 'YES' PILE FROM THE TiAb screening phase.
-## > AS OF JULY 13th ALL THE YES HAVE BEEN SCREENED 
-## > AS OF AUG 1st, ALL THE THESES IN YES HAVE BEEN SCREENED
+rm(list = ls())
+
 ## 1. Load relevant packages--------
-library(tidyverse) #v2.0.0
-library(rphylopic) #v1.1.1
-library(patchwork) #v1.1.2; arrange figures using patchwork R package ggplot extension
-library(maps) #v3.4.1
-library(sf) #v1.0-14
+pacman::p_load(tidyverse, rphylopic, patchwork, maps, sf)
 
 ## 2. Load .csv file of the screening results ####
-# rm(list=ls()) #uncomment to remove everything from environment
-fs_yes <- read_csv("./raw_data/10-full_screening/fullscreen_yes_results.csv")
+fs_yes <- read_csv("./raw_data/09-full_screening/fullscreen_yes_results.csv")
 fs_yes <- fs_yes %>% mutate(ex_r = ifelse(excl_reason=="na", "Keep", "Reject")) #this is a useful category, it can be removed from each of the figure calls and just called directly
-str(fs_yes)
 
 ### 2.1 Criteria DECISIONS ####
 ### 2.1.1 Proportion of keep/reject
@@ -62,10 +56,8 @@ exl_crit %>%
   scale_y_continuous(breaks=seq(0,70,10), expand = c(0, 0), limits = c(0,70)) +
   theme_minimal() + theme(axis.line = element_line(linetype = "solid"),
                           panel.background = element_rect(fill = NA))
-## INSERT TABLE WITH CRITERIA DECISIONS ##
 
 ### 2.2 Authors -----------------------------------------------------------
-str(fs_yes)
 ## create a count of the # of authors on each paper
 fs_yes$num_authors <- sapply(strsplit(fs_yes$author, ";\\s*|\\s+and\\s+"), length)
 

@@ -1,178 +1,32 @@
 ## HEADER---------------------------
-## Script name: 14-metaanalytic modelling- by response variable
+## Script name: 14-metaanalytic_models_byresponse
 ##
-## Purpose of script: Model the effects of moderators on the effects of connectivity on biodiversity. 
-## 
+## Purpose of script:
 ##
 ## Author: Andrew Habrich
 ##
-## Date Created: 2024-07-4
-## Date last Modified: 2024-07-29
+## Date Created: 2024-09-05
+## Date last Modified: 2024-09-05
 ##
 ## Email: 
 ## - andrhabr@gmail.com
 ## - andrewhabrich@cmail.carleton.ca
 ## 
 ## Notes ---------------------------
-rm(list = ls())
 
-## 1. Load relevant packages ###################################################
-pacman::p_load(devtools, tidyverse, metafor, patchwork, R.rsp, orchaRd, emmeans, ape, phytools, flextable)
+## 1. Load relevant packages--------
+#install.packages("pacman")
+pacman::p_load(devtools, R.rsp, ape, phytools, flextable,
+               tidyverse, patchwork, ggpubr, RColorBrewer, easystats,
+               metafor, orchaRd, emmeans, ggpubr)
 
-### for stats
-library(tidyverse)
-library(easystats)
-library(metafor)
-library(emmeans)
-library(ggpubr)
-
-### Read in data ###############################################################
-es_data <- read_csv("data/14-effectsize_data_pooled.csv")
-## remove 'fungus' and convert Arthropoda to invertebrates
-es_data <- es_data %>% filter(Study_class != "fungus") %>% 
+## 2. Read in data -----------------
+es_data <- read_csv("data/14-effectsize_data_pooled.csv") %>% 
+  ## remove 'fungus' and convert Arthropoda to invertebrates
+  filter(Study_class != "fungus") %>% 
   mutate(Study_class = ifelse(Study_class == "arthropoda", "invertebrates", Study_class)) %>% 
-## remove Conn_feat with <3 entries
+  ## remove Conn_feat with <3 entries
   group_by(Conn_feat) %>% filter(n() >= 3) %>% ungroup()
-
-##SUMMARY ##
-### How many effect sizes are in the dataset?
-nrow(es_data)
-### How many different studies are there?
-es_data %>% distinct(studyID) %>% nrow()
-### How many different cities?
-es_data %>% distinct(City) %>% nrow()
-### How many countries?
-es_data %>% distinct(Country) %>% nrow()
-### How many different connectivity features and their # of entries?
-es_data %>% count(Conn_feat) %>% arrange(desc(n))
-### How many different response metrics?
-es_data %>% count(r_metric) %>% arrange(desc(n))
-### How many different taxon classes?
-es_data %>% count(Study_class) %>% arrange(desc(n))
-
-
-#plot histogram of predictor variables
-es_data %>% ggplot(aes(green_avg)) + geom_histogram(bins = 100) + theme_minimal()
-DataExplorer::plot_histogram(es_data)
-
-### map of cities
-# junk<- c("layersControl", "zoomControl", "homeButton", "drawToolbar", "easyButton")
-# es_data %>% filter(!is.na(lat) & !is.na(long)) %>% 
-#   distinct(City_clean, Country, lat, long) %>% 
-#   sf::st_as_sf(coords = c("long", "lat"), crs = 4326) %>% 
-#   #plot using mapview (note need to use options(viewer = NULL) to view in RStudio)
-#   mapview::mapview(zcol = "City_clean", col.regions = "blue",
-#                    viewer.suppress = TRUE, legend = F) %>% 
-#   mapview::removeMapJunk(junk = junk)
-
-### Approximate the VarianceNULL### Approximate the Variance-Covariance Matrix of Dependent Effect Sizes or Outcomes (Used in multilevel meta-analytic models)
-## cluster = studyID, subgroup = independent groups in cluster, obs = ES_no
-Vpool <- vcalc(vi = vi, cluster = studyID, type = r_metric, obs = ES_no, data = es_data, rho = c(0.5, 0.5),
-               checkpd = T, nearpd = F) #calculate sampling variance, clustered by Study ID
-
-## 2. Meta-analytic models by response metric ##################################
-#### Generate a general model and check diagnostics
-modmv <- rma.mv(yi = yi, V = Vpool,
-                random = list(~ 1 | studyID,
-                              ~ 1 | ES_no),
-                data = es_data, method = "REML", test = "t", dfs = "contain", verbose = F)
-summary(modmv); funnel(modmv, yaxis = "seinv")
-i2_ml(modmv); r2_ml(modmv, data = es_dat_pool)
-# generate cluster-robust inference method of variance
-robust(modmv, cluster = studyID, clubSandwich = T)
-# generate a profile likelihood plot
-profile(modmv, progbar = T, plot = T, refline = T)
-
-### 2.1 Univariate model plots for pooled dataset ##############################
-# intercept model
-orchard_plot(modmv, mod = "1", group = "studyID", angle = 90,
-             xlab = "Correlation coefficient", transfm = "tanh", k = F, g = F) + 
-  theme(axis.text.y = element_blank()) + xlab("Mean effect")
-
-# moderator models
-orchard_plot(update(modmv, ~factor(r_metric)), mod = "r_metric", group = "studyID",
-             condition.lab = "Response metric", angle = 0, legend.pos = "top",
-             xlab = "Correlation coefficient", transfm = "tanh", k = TRUE, g = F, cb = T)
-orchard_plot(update(modmv, ~factor(Study_class)), mod = "Study_class", group = "studyID",
-             condition.lab = "Taxon class", angle = 0,
-             xlab = "Correlation coefficient", transfm = "tanh", k = TRUE, g = F, cb = T)
-orchard_plot(update(modmv, ~factor(Conn_feat)), mod = "Conn_feat", group = "studyID",
-             condition.lab = "Connectivity feature", angle = 0,
-             xlab = "Correlation coefficient", transfm = "tanh", k = TRUE, g = F, cb = T)
-
-bubble_plot(update(modmv, ~absLat), mod = "absLat", group = "studyID",
-            ylab = "Effect size Fisher's Z", xlab = "Absolute Latitude")
-bubble_plot(update(modmv, ~Pub_year), mod = "Pub_year", group = "studyID",
-            ylab = "Effect size Fisher's Z", xlab = "Publication year")
-bubble_plot(update(modmv, ~area_km2_log), mod = "area_km2_log", group = "studyID",
-            ylab = "Effect size Fisher's Z", xlab = "log(Urban area km2)")
-bubble_plot(update(modmv, ~pop_dens_log), mod = "pop_dens_log", group = "studyID",
-            ylab = "Effect size Fisher's Z", xlab = "log(population/km2)")
-bubble_plot(update(modmv, ~green_avg), mod = "green_avg", group = "studyID",
-            ylab = "Effect size Fisher's Z", xlab = "Avg. Greeness index")
-bubble_plot(update(modmv, ~green_km2_log), mod = "green_km2_log", group = "studyID",
-            ylab = "Effect size Fisher's Z", xlab = "Avg. Greeness index")
-bubble_plot(update(modmv, ~Age_mean), mod = "Age_mean", group = "studyID",
-            ylab = "Effect size Fisher's Z", xlab = "Avg. Urban age")
-bubble_plot(update(modmv, ~Age_SD), mod = "Age_SD", group = "studyID",
-            ylab = "Effect size Fisher's Z", xlab = "Std. dev. Urban age")
-
-# ## Update the model with the response metric as a moderator
-# modmv_r <- update(modmv, ~factor(r_metric) -1)
-# summary(modmv_r)
-# 
-# # Estimate the cook's distance to identify influential studies (NOTE: Takes a long time to run)
-# cd <- cooks.distance.rma.mv(modmv_r, progbar = T, cluster = studyID, reestimate = T)
-# plot(cd, type="o", pch=19, xlab="Observed Outcome", ylab="Cook's Distance")
-# # What rows have a cook's distance greater than 1? 
-# cd[cd > 1] %>% as.data.frame() %>% arrange(desc(.))
-# # How many effect sizes are in each of these studies?
-# es_dat_pool %>% filter(studyID %in% names(cd[cd > 1])) %>% count(studyID) %>% arrange(desc(n))
-
-### 2.2 Multivariate models for pooled dataset #################################
-modmv_p <- update(modmv, ~ . + factor(Conn_feat) + factor(Study_class) + factor(r_metric) +
-                      area_km2_log + pop_dens_log + absLat + green_avg + Age_mean -1)
-
-summary(modmv_p)
-i2_ml(modmv_p); r2_ml(modmv_p, data = es_data)
-robust(modmv_p, cluster = studyID, clubSandwich = T)
-
-## visualize
-###intercept pooled
-orchard_plot(modmv, mod = "1", group = "studyID", angle = 90, trunk.size = 1, branch.size = 1.5,
-             xlab = "Correlation coefficient", transfm = "tanh", k = F, g = F) + 
-  theme(axis.text.y = element_blank()) + xlab("Mean effect") +
-  scale_fill_manual(values = "lightgreen") +
-  scale_colour_manual(values = "forestgreen")
-ggsave("output/figures/14_orchard_plot_pooled.png", plot = last_plot(), width = 6, height = 6, dpi = 300)
-
-###response metric model
-pal <- brewer.pal(n = 11, name = "RdYlBu")
-resp_plot <- orchard_plot(modmv_p, mod = "r_metric", group = "studyID", 
-             tree.order = emmeans(emmprep(modmv_p), ~r_metric) %>% as.data.frame() %>% #arrange by estimated effect
-               arrange(emmean) %>% select(r_metric) %>% pull() %>% str_to_sentence(),
-             angle = 0, legend.pos = "none", transfm = "tanh", k = T, g = F, cb = T,
-             alpha = 0.40, trunk.size = 1, branch.size = 1.5, fill = T, 
-             xlab = "Correlation coefficient")+
-  scale_fill_manual(values = pal, aesthetics = c("fill", "colour")) 
-resp_plot$layers[[4]]$aes_params$fill <- "white" #change the fill of mean estimates
-resp_plot$layers[[4]]$aes_params$stroke <- 2 #change the stroke (border) of mean estimates
-resp_plot$layers[[1]]$aes_params$colour <- "black" #change the border of each effect size
-resp_plot
-ggsave("output/figures/14_orchard_plot_respmetric.png", plot = last_plot(), width = 6, height = 6, dpi = 300)
-
-###connectivity feature model
-conn_plot <- orchard_plot(modmv_p, mod = "Conn_feat", group = "studyID",
-             tree.order = emmeans(emmprep(modmv_p), ~Conn_feat) %>% as.data.frame() %>% #arrange by estimated effect
-               arrange(emmean) %>% select(Conn_feat) %>% pull() %>% str_to_sentence(),
-             angle = 0, legend.pos = "bottom.out", transfm = "tanh", k = T, g = F, cb = T,
-             alpha = 0.40, trunk.size = 1, branch.size = 1.5, fill = T,
-             xlab = "Correlation coefficient")
-conn_plot$layers[[4]]$aes_params$fill <- "white" #change the fill of mean estimates
-conn_plot$layers[[4]]$aes_params$stroke <- 2 #change the stroke (border) of mean estimates
-conn_plot$layers[[1]]$aes_params$colour <- "black" #change the border of each effect size
-conn_plot
-ggsave("output/figures/14_orchard_plot_connfeat.png", plot = last_plot(), width = 6, height = 6, dpi = 300)
 
 ## 3. Multivariate models by response metric ###################################
 ### 3.1 Species richness ------------------------------------------------------
@@ -259,10 +113,10 @@ robust(sr_fit, cluster = studyID, clubSandwich = T)
 ## Orchard and bubble plots
 ### STUDY CLASS MODEL
 sr_class_plot <- orchard_plot(sr_fit, mod = "Study_class", condition.lab = "Taxon class", 
-             tree.order = emmeans(emmprep(sr_fit), ~Study_class) %>% as.data.frame() %>% #arrange by estimated effect
-               arrange(emmean) %>% select(Study_class) %>% pull() %>% str_to_sentence(),
-             angle = 0, xlab = "Correlation coefficient", transfm = "tanh",
-             group = "studyID",  k = TRUE, g = F, cb = T) #k = #ofES, g = #ofpapers 
+                              tree.order = emmeans(emmprep(sr_fit), ~Study_class) %>% as.data.frame() %>% #arrange by estimated effect
+                                arrange(emmean) %>% select(Study_class) %>% pull() %>% str_to_sentence(),
+                              angle = 0, xlab = "Correlation coefficient", transfm = "tanh", legend.pos = "none",
+                              group = "studyID",  k = TRUE, g = F, cb = T) #k = #ofES, g = #ofpapers 
 sr_class_plot$layers[[4]]$aes_params$fill <- "white" #change the fill of mean estimates
 sr_class_plot$layers[[4]]$aes_params$size <- 1 #change the stroke (border) of mean estimates
 sr_class_plot$layers[[4]]$aes_params$stroke <- 2 #change the stroke (border) of mean estimates
@@ -273,11 +127,11 @@ ggsave("output/figures/14_orchard_sprich_studyclass.png", plot = last_plot(), wi
 
 ### CONNECTIVITY FEATURE MODEL, arranged in declining order of effect size
 sr_conn_plot <- orchard_plot(update(mod_richC, method = "REML"), mod = "Conn_feat", condition.lab = "Connectivity measure", 
-             tree.order = emmeans(emmprep(update(mod_richC, method = "REML")), ~Conn_feat) %>% 
-               #arrange by estimated effect
-               as.data.frame() %>% arrange(emmean) %>% select(Conn_feat) %>% pull() %>% str_to_sentence(), 
-             angle = 0, xlab = "Correlation coefficient", transfm = "tanh", colour = F, fill = T,
-             group = "studyID",  k = TRUE, g = F, cb = F) #k = #ofES, g = #ofpapers
+                             tree.order = emmeans(emmprep(update(mod_richC, method = "REML")), ~Conn_feat) %>% 
+                               #arrange by estimated effect
+                               as.data.frame() %>% arrange(emmean) %>% select(Conn_feat) %>% pull() %>% str_to_sentence(), 
+                             angle = 0, xlab = "Correlation coefficient", transfm = "tanh", colour = F, fill = T, legend.pos = "none",
+                             group = "studyID",  k = TRUE, g = F, cb = F) #k = #ofES, g = #ofpapers
 sr_conn_plot$layers[[4]]$aes_params$fill <- "white" #change the fill of mean estimates
 sr_conn_plot$layers[[4]]$aes_params$size <- 1 #change the size of mean estimates
 sr_conn_plot$layers[[4]]$aes_params$stroke <- 2 #change the stroke (border) of mean estimates
@@ -397,7 +251,7 @@ robust(ab_fit, cluster = studyID, clubSandwich = T, adjust = F)
 b<-c("Plantae", "Invertebrates", "Arachnida", "Insecta", "Aves")
 ab_class_plot <-orchard_plot(ab_fit, mod = "Study_class",condition.lab = "Taxon class", angle = 0,
                              legend.pos = "none",
-             tree.order = b, xlab = "Correlation coefficient", transfm = "tanh", group = "studyID",  k = T, g = F, cb = T) 
+                             tree.order = b, xlab = "Correlation coefficient", transfm = "tanh", group = "studyID",  k = T, g = F, cb = T) 
 ab_class_plot$layers[[4]]$aes_params$fill <- "white" #change the fill of mean estimates
 ab_class_plot$layers[[4]]$aes_params$size <- 1 #change the size of mean estimates
 ab_class_plot$layers[[4]]$aes_params$stroke <- 2 #change the stroke (border) of mean estimates
@@ -423,7 +277,7 @@ abunmodel <- orchaRd::mod_results(ab_fit, group = "studyID", mod = "Study_class"
                                   at = list(green_avg = c(0.2, 0.4, 0.6)), by = "green_avg")
 orchaRd::orchard_plot(abunmodel, xlab = "Correlation coefficient", group = "studyID", angle = 0, g = FALSE, 
                       legend.pos = "bottom.out", condition.lab = "% Greeness", transfm = "tanh") + 
-                      theme(legend.direction = "horizontal")
+  theme(legend.direction = "horizontal")
 ggsave("output/figures/14_orchard_abun_greenavg2.png", plot = last_plot(), width = 8, height = 6, dpi = 300)
 
 # caterpillar plot
@@ -433,11 +287,11 @@ orchaRd::caterpillars(modABG_res, mod = "Study_class", group = "studyID", overal
 
 ### CONNECTIVITY METRICS MODEL
 ab_conn_plot <- orchard_plot(update(mod_abunC, method = "REML"), mod = "Conn_feat", 
-                            condition.lab = "Connectivity measure", angle = 0,
-             tree.order = emmeans(emmprep(update(mod_abunC, method = "REML")), ~Conn_feat) %>% as.data.frame() %>% 
-               arrange(emmean) %>% select(Conn_feat) %>% pull() %>% str_to_sentence(),
-             xlab = "Correlation coefficient", transfm = "tanh", 
-             group = "studyID",  k = TRUE, g = F, cb = T) 
+                             condition.lab = "Connectivity measure", angle = 0,
+                             tree.order = emmeans(emmprep(update(mod_abunC, method = "REML")), ~Conn_feat) %>% as.data.frame() %>% 
+                               arrange(emmean) %>% select(Conn_feat) %>% pull() %>% str_to_sentence(),
+                             xlab = "Correlation coefficient", transfm = "tanh", 
+                             group = "studyID",  k = TRUE, g = F, cb = T) 
 ab_conn_plot$layers[[4]]$aes_params$fill <- "white" #change the fill of mean estimates
 ab_conn_plot$layers[[4]]$aes_params$size <- 1 #change the size of mean estimates
 ab_conn_plot$layers[[4]]$aes_params$stroke <- 2 #change the stroke (border) of mean estimates
@@ -474,7 +328,7 @@ mod_occ0 <- rma.mv(yi = yi, V = Vocc,
                    data = es_dat_occ, method = "ML", test = "t", verbose = F)
 mod_occA <- rma.mv(yi = yi, V = Vocc,
                    mods = ~ factor(Conn_feat) + factor(Study_class) + area_km2_log + pop_dens_log + 
-                            absLat + green_avg + Age_mean -1,
+                     absLat + green_avg + Age_mean -1,
                    random = list(~ 1 | studyID,
                                  ~ 1 | ES_no),
                    data = es_dat_occ, method = "ML", test = "t", dfs = "contain", verbose = F)
@@ -531,8 +385,8 @@ robust(occ_fit, cluster = studyID)
 occ_conn_plot <- orchard_plot(occ_fit, mod = "Conn_feat", condition.lab = "Connectivity feature", angle = 0,
                               tree.order = emmeans(emmprep(occ_fit), ~Conn_feat) %>% as.data.frame() %>% 
                                 arrange(emmean) %>% select(Conn_feat) %>% pull() %>% str_to_sentence(),
-             xlab = "Correlation coefficient", transfm = "tanh", legend.pos = "bottom.out",
-             group = "studyID",  k = TRUE, g = F, cb = T) #k = #ofES, g = #ofpapers
+                              xlab = "Correlation coefficient", transfm = "tanh", legend.pos = "bottom.out",
+                              group = "studyID",  k = TRUE, g = F, cb = T) #k = #ofES, g = #ofpapers
 occ_conn_plot$layers[[4]]$aes_params$fill <- "white" #change the fill of mean estimates
 occ_conn_plot$layers[[4]]$aes_params$size <- 1 #change the stroke (border) of mean estimates
 occ_conn_plot$layers[[4]]$aes_params$stroke <- 2 #change the stroke (border) of mean estimates
@@ -616,10 +470,10 @@ robust(gene_fit, cluster = studyID, clubSandwich = T, adjust = F)
 
 ## Orchard plots
 gs_conn_plot <- orchard_plot(gene_fit, 
-             mod = "Conn_feat",
-             condition.lab = "Connectivity feature", angle = 0,
-             xlab = "Correlation coefficient", transfm = "tanh", legend.pos = "bottom.out",
-             group = "studyID",  k = TRUE, g = F, cb = T) #k = #ofES, g = #ofpapers)
+                             mod = "Conn_feat",
+                             condition.lab = "Connectivity feature", angle = 0,
+                             xlab = "Correlation coefficient", transfm = "tanh", legend.pos = "bottom.out",
+                             group = "studyID",  k = TRUE, g = F, cb = T) #k = #ofES, g = #ofpapers)
 gs_conn_plot$layers[[4]]$aes_params$fill <- "white" #change the fill of mean estimates
 gs_conn_plot$layers[[4]]$aes_params$size <- 1 #change the stroke (border) of mean estimates
 gs_conn_plot$layers[[4]]$aes_params$stroke <- 2 #change the stroke (border) of mean estimates
@@ -650,3 +504,119 @@ orchard_plot(update(mod_genC, ~.-1, method = "REML"),
              condition.lab = "Taxa", angle = 45,
              xlab = "Correlation coefficient", transfm = "tanh",
              group = "studyID",  k = TRUE, g = F)
+
+### 3.5 Beta-diversity --------------------------------------------------------
+es_dat_beta <- es_data %>% filter(r_metric == "beta-diversity") %>% 
+  filter(!is.na(absLat)) %>% 
+  ## remove Conn_feat that have less than 3 entries
+  group_by(Conn_feat) %>% filter(n() >= 3) %>% ungroup() 
+
+## construct a variance-covariance matrix for the beta-diversity data
+Vbeta <- vcalc(vi = vi, cluster = studyID, obs = ES_no, data = es_dat_beta, rho = c(0.5),
+               checkpd = T, nearpd = F) #calculate sampling variance, clustered by Study ID
+
+## check correlations of variables
+ggcorrplot::ggcorrplot(correlation(es_dat_beta %>% 
+                                     select(absLat, Pub_year, area_km2_log, pop_dens_log, Age_mean, Age_SD, 
+                                            greenbuiltratio, elevavg_m, green_avg, green_km2_log, 
+                                            built_km2_log, prop_green_log)), 
+                       type = "lower", lab = T, lab_size = 2) #several correlations, consider removing some variables
+
+## generate a model for beta-diversity
+mod_beta0 <- rma.mv(yi = yi, V = Vbeta,
+                    random = list(~ 1 | studyID,
+                                  ~ 1 | ES_no),
+                    data = es_dat_beta, method = "ML", test = "t", verbose = F)
+mod_betaA <- rma.mv(yi = yi, V = Vbeta,
+                    mods = ~ factor(Conn_feat) + factor(Study_class) + area_km2_log + pop_dens_log + absLat + green_avg -1,
+                    random = list(~ 1 | studyID,
+                                  ~ 1 | ES_no),
+                    data = es_dat_beta, method = "ML", test = "t", dfs = "contain", verbose = F)
+mod_betaB <- update(mod_beta0, ~ factor(Conn_feat) -1)
+mod_betaC <- update(mod_beta0, ~ factor(Study_class) -1)
+## conn_feat with other variables
+mod_betaD <- update(mod_beta0, ~ factor(Conn_feat) + area_km2_log -1)
+mod_betaE <- update(mod_beta0, ~ factor(Conn_feat) + pop_dens_log -1)
+mod_betaF <- update(mod_beta0, ~ factor(Conn_feat) + Pub_year -1)
+mod_betaG <- update(mod_beta0, ~ factor(Conn_feat) + absLat -1)
+mod_betaH <- update(mod_beta0, ~ factor(Conn_feat) + green_avg -1)
+mod_betaI <- update(mod_beta0, ~ factor(Conn_feat) + Age_mean + Pub_year -1)
+mod_betaJ <- update(mod_beta0, ~ factor(Conn_feat) + Age_mean -1)
+mod_betaK <- update(mod_beta0, ~ factor(Conn_feat) + Pub_year + area_km2_log + pop_dens_log + absLat + green_avg -1)
+
+##univariate models
+mod_beta1 <- update(mod_beta0, ~ area_km2_log)
+mod_beta2 <- update(mod_beta0, ~ pop_dens_log)
+mod_beta3 <- update(mod_beta0, ~ Pub_year)
+mod_beta4 <- update(mod_beta0, ~ absLat)
+mod_beta5 <- update(mod_beta0, ~ green_avg)
+mod_beta6 <- update(mod_beta0, ~ Age_mean)
+
+## compare fit statistics
+fitstats(mod_beta0, mod_betaA, mod_betaB, mod_betaC, 
+         mod_betaD, mod_betaE, mod_betaF, mod_betaG, mod_betaH, mod_betaI, mod_betaJ, mod_betaK, REML = F) #compare model AIC values
+fitstats(mod_beta0, mod_betaA, mod_betaB, mod_betaC,
+         mod_beta1, mod_beta2, mod_beta3, mod_beta4, mod_beta5, mod_beta6, REML = F) #compare model AIC values
+
+## model summary
+beta_fit <- update(mod_betaD, method = "REML")
+summary(beta_fit)
+funnel(beta_fit, yaxis="seinv")
+r2_ml(beta_fit, data = es_dat_beta); i2_ml(beta_fit)
+## robust parameter estimation
+robust(beta_fit, cluster = studyID)
+
+## Orchard plots
+beta_conn_plot <- orchard_plot(beta_fit, 
+                               mod = "Conn_feat",
+                               condition.lab = "Connectivity feature", angle = 0,
+                               xlab = "Correlation coefficient", transfm = "tanh", legend.pos = "bottom.out",
+                               group = "studyID",  k = TRUE
+) #k = #ofES, g = #ofpapers
+beta_conn_plot$layers[[4]]$aes_params$fill <- "white" #change the fill of mean estimates
+beta_conn_plot$layers[[4]]$aes_params$size <- 1 #change the stroke (border) of mean estimates
+beta_conn_plot$layers[[4]]$aes_params$stroke <- 2 #change the stroke (border) of mean estimates
+beta_conn_plot$layers[[1]]$aes_params$colour <- "black" #change the border of each effect size
+beta_conn_plot
+## save figure to file
+ggsave("output/figures/14_orchard_beta_connfeat.png", plot = last_plot(), width = 6, height = 6, dpi = 300)
+
+### bubble plot of the moderator effect
+bubble_plot(beta_fit, mod = "area_km2_log", group = "studyID", transfm = "tanh",
+            ylab = "Correlation coefficient", xlab = "City area (log)",
+            legend.pos = "none") + #add a horizontal line at 0
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red", linewidth = 0.5)
+
+## save to file
+ggsave("output/figures/14_bubble_beta_area.png", plot = last_plot(), width = 6, height = 6, dpi = 300)
+
+## Taxonomic plot
+orchard_plot(update(mod_betaC, method = "REML"),
+             mod = "Study_class",
+             condition.lab = "Taxa", angle = 45,
+             xlab = "Correlation coefficient", transfm = "tanh",
+             group = "studyID",  k = TRUE, g = F)
+
+############# OTHER RESPONSE METRICS #################
+### MOVEMENT ###
+mod_move <- rma.mv(yi = yi, V = vcalc(vi = vi, cluster = studyID, obs = ES_no, 
+                                      data = es_data %>% filter(r_metric == "movement") %>% filter(!is.na(absLat)),
+                                      rho = c(0.5), checkpd = T, nearpd = F),
+                   random = list(~ 1 | studyID,
+                                 ~ 1 | ES_no),
+                   data = es_data %>% filter(r_metric == "movement") %>% filter(!is.na(absLat)), 
+                   method = "REML", test = "t", verbose = F)
+orchard_plot(mod_move, mod = "1", group = "studyID", angle = 90, trunk.size = 1, branch.size = 1.5,
+             xlab = "Correlation coefficient", transfm = "tanh", k = F, g = F) + 
+  theme(axis.text.y = element_blank()) + xlab("Mean effect") +
+  scale_fill_manual(values = "lightgreen") +
+  scale_colour_manual(values = "forestgreen")
+## orchard plot of conn feat
+orchard_plot(update(mod_move, ~factor(Conn_feat) -1), mod = "Conn_feat", group = "studyID", angle = 0, trunk.size = 1, branch.size = 1.5,
+             xlab = "Correlation coefficient", transfm = "tanh", k = T, g = F, legend.pos = "none") +
+  xlab("Mean effect") 
+## orchard plot of study class
+orchard_plot(update(mod_move, ~factor(Study_class) -1), mod = "Study_class", group = "studyID", angle = 0, trunk.size = 1, branch.size = 1.5,
+             xlab = "Correlation coefficient", transfm = "tanh", k = T, g = F, legend.pos = "none") +
+  xlab("Mean effect")
+

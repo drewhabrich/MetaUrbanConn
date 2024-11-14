@@ -1,23 +1,22 @@
 ## HEADER---------------------------
-## Script name: 03-search bibliography tidying
+## Script name: 03-searchbibliography_tidybiblio
 ##
 ## Purpose of script: tidy the deduplicated bibliography results, fill empty cells and missing data
 ##
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-04-21
-## Date last Modified: 2023-10-24 
+## Date last Modified: 2024-11-14 
 ##
 ## Email: 
 ## - andrhabr@gmail.com
 ## - andrewhabrich@cmail.carleton.ca
 ## 
 ## Notes ---------------------------
+rm(list = ls())
 
 ## 1. Load relevant packages--------
-library(tidyverse) #v2.0.0
-library(rcrossref) #v1.2.0
-library(synthesisr) #v0.3.0
+pacman::p_load(tidyverse, rcrossref, synthesisr)
 
 # 2. Read in the bibliographic data set ------------------------------------
 # rm(list=ls()) #remove everything in the R environment, use as needed.
@@ -35,8 +34,8 @@ dat <- initial_dat %>%
   as_tibble()
   
 ## 2.1. Tidy the dataframe and fill empty cells ----
-## Currently there are empty cells in these columns:
-dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
+## Currently there are empty cells in these columns: Uncomment to check
+#dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
 
 ### 2.1.1. Fill Journal information
 ## Fill the last remaining empty 'journals' with the source type if it is not a journal (e.g. report, book, or conference paper)
@@ -58,11 +57,7 @@ dat <- dat %>%
   select(-year.x, -year.y, -url.x, -url.y) %>% #remove the redundant columns
   relocate(year, .after = author) %>% relocate(url, .after = doi)
 
-# *How many empty cells are still left?* 
-dat %>% summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
-
 ## 2.2. Retrieve missing digital identifiers (DOI and URLs) ----
-## Is there a pattern to which entries are missing DOI? Or URLS?
 ### 2.2.1 DOI MISSING
 # what years?
 dat %>% filter(is.na(doi)) %>% ggplot(aes(x = year)) +
@@ -85,8 +80,6 @@ dat %>% filter(is.na(url)) %>% ggplot(aes(x = year)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
   labs(x = "Year", y = "Publication count", title = "Search results with missing URLS by year") + xlim(1980,NA)+
   theme_bw()
-# large number missing for 2022
-dat %>% filter(is.na(url)) %>% filter(year=="2022") %>% tibble
 
 # what journals?
 dat %>% filter(is.na(url)) %>% group_by(journal) %>% count(journal) %>% 
@@ -103,33 +96,21 @@ dat$num_authors <- sapply(strsplit(dat$author, ";\\s*|\\s+and\\s+"), length)
 #### create label column in the format: Author_year_journal
 dat <- dat %>%
   mutate(label = ifelse(num_authors > 2,#condition
-                        str_c(word(author, 1, sep = ", "),"et_al", year, str_replace_all(journal, " ", ""),sep = "_"),#if condition is met
-                        str_c(word(author, 1, sep = ", "), year, str_replace_all(journal, " ", ""), sep = "_" #else use this
+                        str_c(word(author, 1, sep = ", "),"et_al", year, 
+                              str_replace_all(journal, " ", ""),sep = "_"),#if condition is met
+                        str_c(word(author, 1, sep = ", "), year, 
+                              str_replace_all(journal, " ", ""), sep = "_" #else use this
                         )) 
   ) %>%  
   mutate(label = str_trunc(label, width = 50, side = c("right"), ellipsis = "")) %>%
   relocate(label, .before = "author")
 
 # 3. Bibliography data exploration ----------
-## check the data structure
-dat %>% summarise(across(everything(), ~ sum(is.na(.)))) #Columns with # of NAs 
-
 # How many publications by year are there?
 dat %>% ggplot(aes(x = year)) +
   geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
   labs(x = "Year", y = "Publication count", title = "'Urban landscape connectivity' search results by year") + xlim(1990,2024)+
   theme_bw()
-
-# How many authors are there?
-# what is the range of # of authors on an entry?
-dat %>% ggplot(aes(x = num_authors)) +
-  geom_histogram(binwidth = 1, fill = "steelblue", color = "white") +
-  labs(x = "# of authors on publication", y = "Frequency") + theme_bw() + xlim(NA,30)
-
-dat %>% summarise(mean_numauth=mean(num_authors),
-                  med_numauth=median(num_authors),
-                  min_numauth=min(num_authors),
-                  max_numauth=max(num_authors)) #the entry with the max # of authors is a dataset publication with 199 people!
 
 # How many journals are entries published in?
 n_distinct(dat$journal) #distinct journal entries (this only matches on EXACT)

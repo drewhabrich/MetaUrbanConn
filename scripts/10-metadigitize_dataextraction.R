@@ -1,5 +1,5 @@
 ## HEADER---------------------------
-## Script name: 11-metadigitize_dataextraction
+## Script name: 10-metadigitize_dataextraction
 ##
 ## Purpose of script: To extract raw data and estimates from figures using the metadigitise package (and shinyapp)
 ## https://www.rdocumentation.org/packages/metaDigitise/versions/1.0.1
@@ -12,20 +12,17 @@
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2024-01-26
-## Date last Modified: 2024-03-04
+## Date last Modified: 2024-11-14
 ##
 ## Email: 
 ## - andrhabr@gmail.com
 ## - andrewhabrich@cmail.carleton.ca
 ## 
 ## Notes ---------------------------
-
+rm(list = ls())
 # 1. Load relevant packages--------
-library(tidyverse)
-library(shiny)
-library(metaDigitise)
-library(shinyDigitise)
- 
+pacman::p_load(metaDigitise, shinyDigitise, tidyverse, juicr, BiocManager, EBImage)
+
 # 2. Setup directories and folders with figures----
 # Try shinydigitise first
 #### CHECK WHAT VERSION IS WORKING, AS OF NOW THE ONE FROM AUGUST 2023 WORKS ####
@@ -36,8 +33,6 @@ df <- shinyDigitise(dir = figdir)
 data <- metaDigitise(dir = "./raw_figextraction", summary = T)
 
 ## Use juicr to extract specific values from figures types not available for metadigitize
-install.packages("juicr")
-install.packages("BiocManager");
 BiocManager::install("EBImage")
 
 library(juicr)

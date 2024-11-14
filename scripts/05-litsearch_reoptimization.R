@@ -1,25 +1,21 @@
 ## HEADER---------------------------
-## Script name: 01-1-litsearch_reoptimization
+## Script name: 05-litsearch_reoptimization
 ##
-## Purpose of script: Reoptimize keywords using litsearchr, using the screened results,
-## benchmarked articles, and fwd/bwd citationchasing from key reviews
+## Purpose of script: Reoptimize keywords using litsearchr, using the initial naive screened results,
+## in addition to key review articles, and fwd/bwd citation chasing 
 ##
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-03-29
-## Date last Modified: 2023-10-25 
+## Date last Modified: 2024-11-14 
 ##
 ## Email: 
 ## - andrhabr@gmail.com
 ## - andrewhabrich@cmail.carleton.ca
 
+
 ## 1. Literature search preparation -------------------------------------------
-#remotes::install_github("rmetaverse/metaverse") #this installs a whole set of meta-analysis related R packages, https://rmetaverse.github.io/
-library(tidyverse) #v2.0.0
-library(synthesisr) #v0.3.0
-library(litsearchr) #v1.0.0
-library(igraph) #v1.3.5
-library(ggraph) #v2.1.0
+pacman::p_load(tidyverse, synthesisr, litsearchr, igraph, ggraph)
 
 ## First we need to include generic words to exclude from generation of new keywords
 englishstopwords <- litsearchr::get_stopwords("English")
@@ -30,7 +26,7 @@ stopwords <- unique(append(englishstopwords,ecologystopwords))
 ## with Ti/Ab screened results from the previous search string.
 ## Read in the csv of screened results
 bibscreened<-read_csv("./data/effort_drew_04.csv")
-glimpse(bibscreened)
+
 ## Randomly select 100 entries in the "YES" and "MAYBE" with abstract and DOI
 set.seed(888) #set seed for reproducibility 
 bs_subset <- bibscreened %>% 
@@ -42,7 +38,6 @@ bs_subset <- bibscreened %>%
 ## This includes: 19 benchmark articles, a random subset of 100 screened articles, 
 ## 6 key connectivity reviews, and the forward and backward citations from those reviews.
 res <- import_results(directory="raw_data/05-search_optimization")
-glimpse(res)
 
 ### 3.1 subset of screened articles terms ----
 bs_titleterms <- extract_terms(bs_subset$title,
@@ -51,39 +46,36 @@ bs_titleterms <- extract_terms(bs_subset$title,
                           min_freq = 2, # minimum term occurrence for inclusion
                           min_n = 2, # minimum number of words per term
                           stopwords = englishstopwords)
-bs_titleterms
 bs_abstrterms <-extract_terms(bs_subset$abstract,
                           method = "fakerake", #using a modified RAPID AUTOMATIC KEYWORD EXTRACTION
                           ngrams = T, 
                           min_freq = 3, # minimum term occurrence for inclusion
                           min_n = 2, # minimum number of words per term
                           stopwords = stopwords)
-bs_abstrterms
 
 ### 3.2 benchmark and review articles terms ----
 ### We can be more restrictive on how frequently the terms need to come up for inclusion, since there more entries here.
-res_titleterms<-extract_terms(res$title,
+res_titleterms <- extract_terms(res$title,
                           method = "fakerake", #using a modified RAPID AUTOMATIC KEYWORD EXTRACTION
                           ngrams = T, 
                           min_freq = 5, # minimum term occurrence for inclusion
                           min_n = 2, # minimum number of words per term
                           stopwords = stopwords)
-res_titleterms
-res_abstrterms<-extract_terms(res$abstract,
+
+res_abstrterms <- extract_terms(res$abstract,
                           method = "fakerake", #using a modified RAPID AUTOMATIC KEYWORD EXTRACTION
                           ngrams = T, 
                           min_freq = 10, # minimum term occurrence for inclusion
                           min_n = 2, # minimum number of words per term
                           stopwords = stopwords)
-res_abstrterms
-## clean and combine terms list
-### combine
+
+## Clean and combine terms list
 terms <- unique(c(res_titleterms, res_abstrterms, bs_titleterms, bs_abstrterms))
 terms # there are some directional or geographic terms, which could bias the search
 
 ### put together a set of terms to remove
 remove_terms <- c("atlantic forest", "complex landscapes", "european cities", "great plains", "hydrological connectivity", 
-                  "nature conservation", "rapid urbanization", "security pattern","spontaneous plant","",
+                  "nature conservation", "rapid urbanization", "security pattern","spontaneous plant",
                   "ecological security pattern","quantifying landscape","alien species","cities worldwide","findings suggest","important factor","increasingly important","negatively affected",
                   "recent years","scientific literature","significant differences","water bodies","rights reserved","geographic information","major threat","negative consequences",
                   "paper presents","poorly understood","predictive power","provide insights","stepping stones","business media","springer science",
@@ -111,7 +103,6 @@ kw_str <- strength(bib_network)
 term_str <- data.frame(term=names(kw_str), strength = kw_str, row.names=NULL) %>%
   mutate(rank=rank(strength, ties.method="min")) %>%
   arrange(desc(strength)) #arranges in ascending order by default
-tibble(term_str)
 
 ## visualize cutoff figure to decide
 ggplot(term_str, aes(x=rank, y=strength, label=term)) +
@@ -128,6 +119,7 @@ hist(igraph::strength(bib_network), 100, main="Histogram of node strengths", xla
 ## generate a list of the keywords that contribute the top 50% of the network strength
 get_keywords(reduce_graph(bib_network, 
                           find_cutoff(bib_network, method="cumulative", percent=0.75))) 
+
 ## what if we used the changepoint as cutoffs?
 ggplot(term_str, aes(x=rank, y=strength, label=term)) +
   geom_line() +
@@ -141,13 +133,12 @@ ggplot(term_str, aes(x=rank, y=strength, label=term)) +
 ###' The first cutoff point is similar to the 75% retention, so let's try that.
 selected_terms <- get_keywords(reduce_graph(bib_network, 
                           find_cutoff(bib_network, method="cumulative", percent=0.75))) 
-write.csv(selected_terms, "./output/05-search_terms.csv")
+write.csv(selected_terms, "./data/05-search_terms.csv")
 
 ### 4.1 Grouping keywords according to a PICO framework ----
 ### These terms will be used to write a new 'refined' search string 
 ### NOTE excluding fish/non-terrestrial
-grouped_terms <- read.csv("./output/05-grouped_terms.csv")
-glimpse(grouped_terms)
+grouped_terms <- read.csv("./data/05-grouped_terms.csv")
 
 ### Extract the terms for each group from the csv into a list
 grouped_terms <- list(
@@ -168,17 +159,6 @@ old_terms <- list(
 src_terms <- Map(c, old_terms, grouped_terms)
 
 # 5. Writing boolean searches for databases ----------------------------------
-# from the newly grouped terms
-# write_search(
-#   src_terms,
-#   languages = "English", 
-#   exactphrase = T,
-#   stemming = T,
-#   closure = "none",
-#   directory= "./output/upd_exactfull_01-1", 
-#   writesearch = T
-# )
-
 # clean list of terms
 cleanterms <- list(
   urban = c("urban", "urban areas", "city", "cities", "town", "urban environment","urban forest","urban matrix","urban greenspace","urban green","urban landscape","green infrastructure"),
@@ -194,25 +174,14 @@ stemmedterms <- list(
   connectivity = c("connectivity",	"patch connectivity",	"landscape connectivity",	"functional connectivity",	"structural connectivity",	"habitat connectivity",	"ecological connectivity",	"habitat network*",	"ecological network*",	"habitat corridor*",	"ecological corridor*",	"least cost",	"least-cost",	"graph theor*",	"graph-theor*",	"circuit theory",	"circuit-theory",	"landscape resistance*",	"landscape permeabilit*",	"resistance surface*",	"isolation",	"patch isolation",	"habitat isolation")
 )
 
-# write search strings
-# litsearchr::write_search(
-#   cleanterms,
-#   languages = "English", 
-#   exactphrase = T,
-#   stemming = T,
-#   closure = "none",
-#   directory= "./output/upd_exactfull_string01-1", 
-#   writesearch = F,
-#   verbose = T
-# )
-
+# write search strings for each term group and save to txt file to be used in the database search
 litsearchr::write_search(
   stemmedterms,
   languages = "English", 
   exactphrase = T,
   stemming = F,
   closure = "full",
-  directory= "./output/05-manualstem_exactfull_string", 
+  directory= "./data/05-manualstem_exactfull_string", 
   writesearch = T,
   verbose = T
 )

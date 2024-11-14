@@ -1,33 +1,33 @@
 ## HEADER---------------------------
-## Script name: litsearch keyword optimization
+## Script name: 01-litsearch keyword optimization
 ##
 ## Purpose of script: Take an initial set of keywords on a topic and download 'naive' search results from a search database 
 ##
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-3-1
+## Date last modified: 2024-11-14
 ##
 ## Email: 
 ## - andrhabr@gmail.com
 ## - andrewhabrich@cmail.carleton.ca
 ## 
 ## Notes ---------------------------
+# get current date
 
 ## 1. Load relevant packages--------
-# install.packages('remotes')
-library(remotes)  #lets you download R packages outside of CRAN. 
-install_github("elizagrames/litsearchr", ref="main")
+rm(list = ls())
 
-library(tidyverse) #v2.0.0
-library(litsearchr) #v1.0.0
-library(igraph) #v1.3.5
-library(ggraph) #v2.1.0
+## 1. Load relevant packages ###################################################
+pacman::p_load(tidyverse, ggpubr, RColorBrewer, easystats,
+               litsearchr, igraph, ggraph, remotes)
+install_github("elizagrames/litsearchr", ref="main")
+sessionInfo()
 
 # 2. Importing results from initial search string ----------------------------
 # Downloads all files in folder if no specific file is referenced
 initial_results <- import_results(directory = "raw_data/01-naive_search") 
 #check the data structure/format
-glimpse(initial_results)
 colnames(initial_results)
 
 # Generating potential search terms
@@ -88,7 +88,7 @@ cutoff_fig +
 get_keywords(reduce_graph(graph, cutoff_cum)) #a list of the 'strongest' keywords
 hist(igraph::strength(graph), 100, main="Histogram of term-node strengths", xlab="Term-node strength")
 
-## Grouping keywords (manually) to write a new 'refined' search string ##NOTE excluding fish/non-terrestrial
+## Grouping keywords to write a new 'refined' search string; NOTE: exclude fish/non-terrestrial taxa
 grouped_terms <-list(
   urban=c("urban","urban areas","urban landscapes","city","cities","towns"),
   biodiversity=c("biodiversity","wildlife","vegetation","plants","trees","birds","avian","arthropods","insects","mammals","herptiles","reptiles", "amphibians"),
@@ -105,6 +105,6 @@ write_search(
   exactphrase = T,
   stemming = T,
   closure = "full",
-  directory= "./output/01-initial_string", #saved to output folder
+  directory= "./data/01-initial_string", #saved to output folder
   writesearch = T
 )

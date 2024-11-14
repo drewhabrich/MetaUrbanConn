@@ -1,5 +1,5 @@
 ## HEADER---------------------------
-## Script name: Updated search results using CiteSource package
+## Script name: 06-updatedsearch_deduplication
 ##
 ## Purpose of script: updated search string results from various databases.
 ## CiteSource can embed meta-data into the .ris and other bibliographies to
@@ -8,7 +8,7 @@
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-03-30
-## Date last Modified: 2023-10-25 
+## Date last Modified: 2024-11-14 
 ##
 ## Email: 
 ## - andrhabr@gmail.com
@@ -17,12 +17,10 @@
 ## Notes ---------------------------
 
 # 1. Load relevant packages--------
-#library(remotes)
 # Install CiteSource (currently only on github)
 #remotes::install_github("ESHackathon/CiteSource") #uncomment if needed
 # Load the necessary libraries
-library(tidyverse)
-library(CiteSource)
+pacman::p_load(CiteSource, tidyverse)
 
 # 2. Import files from multiple sources ----
 # what files are in the folder?
@@ -59,40 +57,23 @@ bibmeta %>% group_by(cite_source) %>% summarise(across(everything(), ~ sum(is.na
 ### 2.1 Tidying ----
 bibs <- bibmeta 
 
-## How many unique entries are there in columns, and what are they?
-#bibs %>% select(c("source_type","cite_source","cite_label","database","document_type")) %>%
-#  distinct() %>% tibble %>% view
-bibs %>% summarise(across(everything(), ~ n_distinct(.)))
-distinct(bibs, cite_source)
-
 # Merge columns that contain the same data
 ## Journal names/article source
 bibs <- bibs %>% 
           mutate(journal = if_else(is.na(journal), source, journal)) %>% #if 'source' is empty, fill with 'journal'
-          relocate(source, .after = journal)
-
-bibs <- bibs %>% 
-  mutate(journal = str_replace_all(journal, "&", "and")) %>% 
-  mutate(journal = str_to_lower(journal)) %>% #create modified column
-  mutate(journal = str_to_title(journal)) %>% #coerce to title-case
-  mutate(journal = str_replace_all(journal, "\\b(And|In|Of|The|For)\\b", str_to_lower)) #conjunctions to lowercase
-
-## How many columns have empty cells NOW?
-bibs %>% group_by(cite_source) %>% summarise(across(everything(), ~ sum(is.na(.)))) %>% as.data.frame(.)
-bibs %>% count(journal, name = "entry_count") %>% arrange(desc(entry_count))
-
-### let's inspect the columns missing data
-bibs %>% filter(is.na(journal)) %>% tibble()
-bibs %>% filter(is.na(author)) %>% tibble()
-bibs %>% filter(is.na(abstract)) %>% tibble()
+          relocate(source, .after = journal) %>% #move 'source' to the right of 'journal'
+          mutate(journal = str_replace_all(journal, "&", "and")) %>% 
+          mutate(journal = str_to_lower(journal)) %>% #create modified column
+          mutate(journal = str_to_title(journal)) %>% #coerce to title-case
+          mutate(journal = str_replace_all(journal, "\\b(And|In|Of|The|For)\\b", str_to_lower)) #conjunctions to lowercase
 
 # 3. Deduplication and source information ---------------------------------
 # Deduplicate citations (note it wont catch preprints and actual publications!)
 dedup_results <- dedup_citations(bibs, manual = T)
-
 ## Manually review the similarities
 dedup_results$manual_dedup 
-# Get unique citations. This yields a dataframe of all records with duplicates merged, but the originating source information maintained in a new variable called cite_source.
+
+# Get unique citations. 
 unique_citations <- dedup_results$unique
 # Count number of unique and non-unique citations from different sources and labels. 
 n_unique <- count_unique(unique_citations, include_references = T)
@@ -103,8 +84,7 @@ source_comparison <- compare_sources(unique_citations)
 plot_source_overlap_upset(source_comparison, decreasing = c(TRUE, TRUE))
 plot_source_overlap_heatmap(source_comparison)
 plot_source_overlap_heatmap(source_comparison, plot_type = "percentages")
-plot_contributions(n_unique,
-                   center = TRUE)
+plot_contributions(n_unique, center = TRUE)
 
 # Bar plot of unique/crossover PER Source with labels
 n_unique %>%
@@ -144,7 +124,7 @@ uq %>%
     panel.background = element_rect(fill = NA))
 
 # How many records per database by year?
-class(bibs$year)
+
 bibs$year <- as.numeric(bibs$year)
 bibs %>% 
   filter(cite_source %in% c("Initial search", "SCOPUS", "WoS", "bioRxiv", "ProQuest")) %>% 
@@ -170,39 +150,5 @@ bibs %>%
         panel.background = element_rect(fill = NA)) + 
   facet_wrap(vars(cite_source))
 
-
-## Export for further analysis
+## Export the ris files for tidying and full-text screening
 export_ris(unique_citations, filename = "./data/06-dedup_updsearch.ris", source_field = "DB", label_field = "N1")
-
-# export_csv(unique_citations, filename = "./data/06-deduplicated_bib.csv", separate="cite_source")
-# synthesisr::write_refs(as.data.frame(unique_citations),
-#            format = "ris", #or "bib"
-#            file = "./data/deduplicated_bib-02-21")
-
-## 4. Save/extract info to PRISMA template -------------------
-### Check how many results there were by source
-# bibmeta %>% group_by(cite_source) %>% count()
-# 
-# ### read in template from the package directory
-# prismainfo <- read.csv(system.file("extdata", "PRISMA.csv", package = "PRISMA2020")) #Check the dataframe to know what rows and columns to replace
-# 
-# # Studies identified in key reviews (Beninde et al 2015, Lookingbill et al. 2022)
-# prismainfo[2, "n"] <- sum(sum(bibmeta$cite_source == "beninderefs") + sum(bibmeta$cite_source == "lookingbillrefs"))
-# prismainfo[2, "boxtext"] <- c("Studies from previous reviews on topic")
-# prismainfo[3, "n"] <- sum(bibmeta$cite_source == "benchmark")
-# prismainfo[3, "boxtext"] <- c("Benchmark inclusion studies identified")
-# # Total number of entries
-# prismainfo[5, "n"] <- nrow(bibmeta)
-# # Find the number of entries per source
-# prismainfo[6, "n"] <- str_c("Web of Science, ", sum(bibmeta$cite_source == "wos"), 
-#                             "; SCOPUS, ", sum(bibmeta$cite_source == "scopus"), 
-#                             "; ProQuest, ", sum(bibmeta$cite_source == "proquest"),
-#                             "; bioRxiv, ", sum(bibmeta$cite_source == "biorxiv"),
-#                             "; Previous screening effort, ", sum(bibmeta$cite_source == "pastsearch"))
-# # Results from fwd + bwd citation chasing
-# prismainfo[12, "n"] <- sum(sum(bibmeta$cite_source == "keyrevfwd") + 
-#                           sum(bibmeta$cite_source == "keyrevbwd") + 
-#                           sum(bibmeta$cite_source == "keyreview"))
-# prismainfo[13,"n"] <- nrow(bibmeta)-6510 #number of duplicates
-# 
-# write_csv(prismainfo, file = "./data/PRISMA_template-02-2.csv")

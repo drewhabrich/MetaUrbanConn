@@ -1,55 +1,44 @@
 ## HEADER---------------------------
-## Script name: Screening of updated search results
+## Script name: 08-updsearch_screening_metagear
 ##
-## Purpose of script: Compiling past screened and new results to be screened
+## Purpose of script: Compiling past screened and new results to be screened from
+##                    the updated search. Screening with 'metagear' package.
 ##
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-04-05
-## Date last Modified: 2023-10-26
+## Date last Modified: 2024-11-14
 ##
 ## Email: 
 ## - andrhabr@gmail.com
 ## - andrewhabrich@cmail.carleton.ca
 ## 
 ## Notes ---------------------------
-
+rm(list=ls())
+   
 # 1. Load relevant packages--------
-library(plyr) #plyr needs to be loaded BEFORE tidyverse to prevent issues with dplyr
-library(tidyverse) #v2.0.0
-library(synthesisr)
-library(metagear) #v0.7.0
+pacman::p_load(plyr, tidyverse, synthesisr, metagear)
 
 # 2. Import the cleaned and deduplicated bibliography to be screened -----
 initial_dat <- read_csv("./data/07-clean_upd_bibliography.csv", col_names = T)
-## Quickly verify that everything is in order:
-glimpse(initial_dat)
 
-# initialize the dataframe for screening (uncomment below to initialize)
-# bib_unscreened <- effort_distribute(initial_dat, reviewers="drew_08", initialize = T, save_split = T, directory = "./data/") #only need to run once, uncomment if needed
-# colnames(bib_unscreened)
+# initialize the dataframe for screening (uncomment below to initialize); only need to run once
+# bib_unscreened <- effort_distribute(initial_dat, reviewers="drew_08", initialize = T, save_split = T, directory = "./data/") 
 
 ### Import the previously screened entries and merge them with the new dataframe 
 ### This minimizes re-screening entries multiple times
-#old.screen <- read_csv("./data/effort_drew2.csv", col_names = T)
 prv.screen <- read_csv("./data/effort_drew_04.csv", col_names = T)
 upd.screen <- read_csv("./data/effort_drew_08.csv", col_names = T)
 
-#prv.screen <- prv.screen %>% select(!c("end_page","publisher","issue")) #remove useless columns
-
 ### merge based on label
 merged_df <- upd.screen %>%
-  left_join(prv.screen %>% select(title, INCLUDE, doi, url, label), by = "label", suffix = c("_upd", "_prv")) %>% #select only relevant columns
-  mutate(INCLUDE = ifelse(!is.na(INCLUDE_prv), INCLUDE_prv, INCLUDE_upd)) %>% #create new INCLUDE column, if NA in previous, replace with updated 
+  left_join(prv.screen %>% select(title, INCLUDE, doi, url, label), 
+            by = "label", suffix = c("_upd", "_prv")) %>% #select only relevant columns
+  #create new INCLUDE column, if NA in previous, replace with updated 
+  mutate(INCLUDE = ifelse(!is.na(INCLUDE_prv), INCLUDE_prv, INCLUDE_upd)) %>% 
   relocate(INCLUDE, .after = "REVIEWERS") %>% 
   select(-INCLUDE_upd, -INCLUDE_prv)
 
-## How many categories are there in the INCLUDE column
-unique(merged_df$INCLUDE)
-## What is the frequency of each group?
-merged_df %>% 
-  group_by(INCLUDE) %>% tally(sort=T) #group by category
-  
 ### create dataframes for each decision, so we can just screen the unscreened stuff
 df_unscreened <- merged_df %>% filter(INCLUDE == "not vetted")
 df_rev <- merged_df %>% filter(INCLUDE == "REVIEW")
@@ -84,36 +73,7 @@ abstract_screener(file="./data/08-unscreenedbib.csv",
                   keyBindingToButtons = c("q","w","e","r","t")) 
 
 #########################
-upd_dat <- read_csv("./data/08-unscreenedbib.csv")# %>% mutate(label = str_replace_all(label, "[.,]", ""))
-old_dat <- read_csv("./output/temp backup/unscreenedbib-04-1.csv", col_names = T)# %>% mutate(label = str_replace_all(label, "[.,]", "")) %>% select(!c(source_type, jour_s))
-
-authx <- old_dat %>% filter(str_detect(author, ";")) %>% 
-  mutate(author = str_replace_all(author, " and ", ", ")) #replace with a semicolon
-authindex <- which(str_detect(old_dat$author, ";")) #get the index of which rows were modified
-
-old_dat$author[authindex] <- authx$author 
-old_dat$num_authors <- sapply(strsplit(old_dat$author, ";\\s*|\\s+and\\s+"), length)
-#### create label column in the format: Author_year_journal
-old_dat <- old_dat %>%
-  mutate(label = ifelse(num_authors > 2,#condition
-                        str_c(word(author, 1, sep = ", "),"et_al", year, str_replace_all(journal, " ", ""),sep = "_"),
-                        str_c(word(author, 1, sep = ", "), year, str_replace_all(journal, " ", ""), sep = "_" #else use this
-                        )) 
-  ) %>%  
-  mutate(label = str_trunc(label, width = 50, side = c("right"), ellipsis = "")) %>%
-  relocate(label, .before = "author")
-
-## merge dataframes
-df <- upd_dat %>% anti_join(old_dat, by = "label") %>%
-  mutate(INCLUDE = ifelse(!is.na(INCLUDE.y), INCLUDE.y, INCLUDE.x)) %>%
-  select(-INCLUDE.x, -INCLUDE.y)
-
-glimpse(df)
-df %>%
-  group_by(INCLUDE) %>% tally(sort=T)
-#########################
- 
-# 4. Screening effort results ----
+# 4. Screening effort results -----------------------------------------------
 ## read in the screened results
 bibscreened <- read_csv("./data/08-unscreenedbib.csv", col_names = T)
 bibscreened %>% 
@@ -127,32 +87,6 @@ bibscreened %>%
                              INCLUDE == "REVIEW" ~ "Review/Methodology/Framework articles",
                              TRUE ~ "IN PROGRESS, not vetted yet")) %>% 
   arrange(desc(percentage))
-
-# What journals are the YES, MAYBE, and REVIEW
-bibscreened %>% 
-  filter(INCLUDE=="YES" | INCLUDE=="MAYBE") %>% 
-  group_by(jour_s) %>% 
-  count(jour_s) %>% 
-  ggplot(aes(x=n, y = reorder(jour_s,n))) + #reorder to descending frequency
-  geom_bar(stat="identity", fill = "steelblue", color = "white") +
-  labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
-  theme(axis.text.y = element_text(size=5)) +  scale_y_discrete(labels = function(x) str_trunc(x, 35))
-
-## How many entries are there for the categories
-### For entries in the YES category, #What is the maximum number of articles from 1 journal?
-bibscreened %>% filter(INCLUDE=="YES") %>% 
-  group_by(jour_s) %>% count(jour_s) %>% 
-  arrange(desc(n)) 
-### For entries in the MAYBE category, #What is the maximum number of articles from 1 journal?
-bibscreened %>% filter(INCLUDE=="MAYBE") %>% 
-  group_by(jour_s) %>% count(jour_s) %>% 
-  arrange(desc(n)) 
-
-### How many journals have more than 5 entries (across all decision groups)
-bibscreened %>% 
-  group_by(jour_s) %>% count(jour_s) %>% 
-  arrange(desc(n)) %>% 
-  filter(n >= 5) %>% n_distinct() 
 
 ## Plot all the INCLUDE categories
 ### pull the list of journals with >5 entries
@@ -175,8 +109,7 @@ bibscreened %>%
   scale_x_continuous(limits = c(0, 120), breaks = seq(0, 120, 5), expand=expand_scale(mult=c(0,0.1))) 
 
 # 5. Full screening efforts -----------------------------------------------
-updscreening <- read_csv("./output/upd_screening_effort-04-1.csv", col_names = T)
-updscreening %>% filter(INCLUDE == "not vetted") %>% count("not vetted") #there should be as many rows as bibscreened df
+updscreening <- read_csv("./data/08-upd_screening_effort.csv", col_names = T)
 
 fullscreen <- updscreening %>%
               left_join(bibscreened %>% select(STUDY_ID, INCLUDE), by = "STUDY_ID") %>% # join the two dataframes
@@ -195,143 +128,10 @@ screensummary_table <- fullscreen %>%
                              INCLUDE == "REVIEW" ~ "Review/Methodology/Framework articles",
                              TRUE ~ "IN PROGRESS, not vetted yet")) %>% 
   arrange(desc(percentage))
-write_csv(screensummary_table, file="./output/tables/final_screenres_table-04-1.csv")
+write_csv(screensummary_table, file="./output/tables/08-final_screenres_table.csv")
 
 ## 5.1. Merge citesource ----
 # merge results with citesource by screening effort/results
 fullscreen <- fullscreen %>% mutate(database = initial_dat$database)
 ## Write to csv to work with later
 write_csv(fullscreen, file = "./data/08-final_tiab_screening.csv")
-
-## Visualize results
-### Yes, maybe, reviews
-fullscreen %>% 
-  filter(INCLUDE!="NOabstr" & INCLUDE!="NOtitle") %>%
-  group_by(jour_s, INCLUDE) %>%
-  summarise(count = n()) %>%
-  filter(count > 1) %>% 
-  ungroup() %>% 
-  ggplot(aes(x= count, y = reorder(jour_s,count), fill = INCLUDE)) + #reorder to descending frequency
-  geom_bar(stat="identity", position = "stack", colour="black") +
-  labs(x = "Frequency", y = "Journal", title = "Frequency of entries by Journal") +
-  theme_bw()+ #to standardize to a common theme
-  theme(axis.text.y = element_text(size = 5),
-        axis.text.x = element_text(size = 10, angle = 45)) + #specific modifications to the theme
-  scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
-  scale_x_continuous(expand = c(0, 0), limits = c(0, 105), breaks = seq(0, 105, 5))  + theme(axis.text = element_text(hjust = 0.75),
-    axis.text.y = element_text(size = 4),
-    legend.position = c(0.9, 0.7)) + theme(legend.position = c(0.85, 0.7))
-
-#Just YES
-fullscreen %>% 
-  filter(INCLUDE=="YES") %>%
-  group_by(jour_s) %>%
-  summarise(count = n()) %>%
-  filter(count > 1) %>% 
-  ggplot(aes(x= count, y = reorder(jour_s,count))) + #reorder to descending frequency
-  geom_bar(stat="identity", position = "stack", colour="black", fill="goldenrod") +
-  labs(x = "Frequency", y = "Journal", title = "Frequency of 'YES' in journals with >1 entry") +
-  theme_bw()+ #to standardize to a common theme
-  theme(axis.text.y = element_text(size = 5)) + #specific modifications to the theme
-  scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
-  scale_x_continuous(expand = c(0, 0), limits = c(0, 40), breaks = seq(0, 40, 5)) 
-
-# # 6. WIP PRISMA screening results - THIS CAN BE MODIFIED--------------
-# library(PRISMA2020) #v1.1.1
-# library(DiagrammeR) #v1.0.9
-# 
-# #prismainfo <- read.csv(system.file("extdata", "PRISMA.csv", package = "PRISMA2020"))
-# # Read in the template from the package directory; edit boxtext column to change text
-# pristemp <- read_csv("./data/PRISMA_template-02-2.csv") 
-# pristemp <- pristemp %>% select(-1) #remove this column...
-# 
-# ## Identify how many entries were removed during tidying; inaccessible
-# pristemp[15,"n"] <- as.character(as.numeric(pristemp[5,"n"]) - as.numeric(pristemp[13,"n"]) - nrow(initial_dat))
-# pristemp[15,"boxtext"] <- c("Records removed: inaccessible")
-# 
-# ## Coerce to list, you can also modify this list to generate the flowdiagram. 
-# prisma <- PRISMA_data(pristemp) 
-# 
-# # Populate the PRISMA list from dataframe information! Use NA to remove the text from the diagram
-# prisma$newstud_text <- "Identification of potential candidate studies for meta-analysis"
-# prisma$register_results <- NA
-# prisma$website_results <-  
-# prisma$organisation_results <- NA
-# prisma$excluded_automatic <- NA
-# prisma$other_sought_reports <- NA
-# prisma$other_notretrieved_reports <- NA
-# prisma$other_assessed <- NA
-# prisma$records_screened <- as.numeric(pristemp[5,"n"]) - as.numeric(pristemp[13,"n"]) - as.numeric(pristemp[15,"n"])
-# prisma$records_screened_text <- c("Records screened on Title")
-# prisma$records_excluded <- nrow(fullscreen %>% filter(INCLUDE == "NOtitle")) 
-# prisma$records_excluded_text <- "Exclusion reasons: \n- Not terrestrial-based\n- Not in urban ecosystem\n- No indication of config/connectivity metric"
-# 
-# prisma$dbr_sought_reports <- nrow(fullscreen) - nrow(fullscreen %>% filter(INCLUDE == "NOtitle"))
-# prisma$dbr_sought_reports_text <- "Records screened on Abstract"
-# prisma$dbr_notretrieved_reports <- nrow(fullscreen %>% filter(INCLUDE == "NOabstr"))
-# prisma$dbr_notretrieved_reports_text <- "Exclusion reasons: \nNot in an urban area or no indication of \nconfiguration or connectivity metric used."
-# prisma$dbr_assessed <- nrow(fullscreen) - nrow(fullscreen %>% filter(INCLUDE == "NOtitle")) - nrow(fullscreen %>% filter(INCLUDE == "NOabstr"))
-# prisma$dbr_assessed_text <- "Records assessed for eligibility"
-# prisma$dbr_excluded <- fullscreen %>% filter(INCLUDE %in% c("REVIEW")) %>% count() 
-# prisma$dbr_excluded_text <- "Records identified as review article"
-# 
-# prisma$new_studies <- fullscreen %>% filter(INCLUDE %in% c("YES","MAYBE")) %>% nrow() 
-# prisma$new_studies_text <- "Records eligible for full-text screening"
-# prisma$new_reports <- NA
-# prisma$new_reports_text <- NA
-# prisma$total_studies <- fullscreen %>% filter(INCLUDE =="YES") %>% count()
-# prisma$total_reports <- fullscreen %>% filter(INCLUDE =="MAYBE") %>% count()
-# prisma$total_studies_text <- "Total studies identified as YES"
-# prisma$total_reports_text <- "Total studies identified as MAYBE"
-# prisma$included_text <- "Screen full-text"
-# 
-# # create and save the PRISMA plot
-# prismaplot <- PRISMA_flowdiagram(prisma,
-#                                  fontsize = 12,
-#                                  interactive = F,
-#                                  previous = T,
-#                                  other = T,
-#                                  detail_databases = T,
-#                                  detail_registers = F)
-# prismaplot$x$diagram <- gsub("A->19", "2->4", prismaplot$x$diagram)
-# prismaplot$x$diagram <- gsub("2->A", "", prismaplot$x$diagram)
-# prismaplot$x$diagram <- gsub("14->15", "", prismaplot$x$diagram)
-# prismaplot
-# 
-# graph <- prismaplot$x$diagram
-# class(graph)
-# grViz(graph)
-# #print(prismaplot$x$diagram)
-# 
-# 
-# 
-# # TEST ZONE ----
-# prismaplot$x$diagram <- gsub("15->16", "", prismaplot$x$diagram);prismaplot$x$diagram <- gsub("15->17", "", prismaplot$x$diagram)
-# prismaplot$x$diagram <- gsub("17->18", "", prismaplot$x$diagram);prismaplot$x$diagram <- gsub("17->B", "", prismaplot$x$diagram)
-# prismaplot
-# 
-# DiagrammeR::grViz(prismaplot$x$diagram)
-# get_node_info(prismaplot)
-# graph_stmt(prismaplot)
-# 
-# prismaplot$x$diagram <- gsub("pos = \"14.25,1.5!\",", "pos = \"14.25,7.5!\",", prismaplot$x$diagram)
-# prismaplot$x$diagram <- gsub("arrowhead = normal,\n          arrowtail = none]\n        14->15", "arrowhead = none,\n          arrowtail = none]\n        14->B", prismaplot$x$diagram)
-# prismaplot$x$diagram <- gsub("arrowhead = none,\n          arrowtail = none]\n        17->B", "arrowhead = normal,\n          arrowtail = none]\n        B->4", prismaplot$x$diagram)
-# prismaplot$x$diagram <- gsub("edge [\n          color = Black,\n          arrowhead = normal,\n          arrowtail = none,\n          constraint = FALSE\n        ]\n        B->12;", "",prismaplot$x$diagram)
-# prismaplot$x$diagram <- gsub("node [\n        shape = box,\n        fontname = Helvetica,\n        color = Gainsboro]\n      15 [\n        label = \"Reports sought for retrieval\n(n = NA)\",\n        style = \"filled\",\n        width = 3.5,\n        height = 0.5,\n        pos = \"14.25,5!\",\n        tooltip = \"Reports sought for retrieval (other)\"\n      ]\n      node [\n        shape = box,\n        fontname = Helvetica,\n        color = Gainsboro]\n      16 [\n        label = \"Reports not retrieved\n(n = NA)\",\n        style = \"filled\",\n        width = 3.5,\n        height = 0.5,\n        pos = \"18.25,5!\",\n        tooltip = \"Reports not retrieved (other)\"\n      ]\n      node [\n        shape = box,\n        fontname = Helvetica,\n        color = Gainsboro\n      ]\n      17 [\n        label = \"Reports assessed for eligibility\n(n = NA)\",\n        style = \"filled\",\n        width = 3.5,\n        height = 0.5,\n        pos = \"14.25,3.5!\",\n        tooltip = \"Reports assessed for eligibility (other)\"\n      ]\n      node [\n        shape = box,\n        fontname = Helvetica,\n        color = Gainsboro]\n      18 [\n        label = \"Reports excluded:\nReason1 (n = NA)\nReason2 (n = NA)\nReason3 (n = NA)\",\n        style = \"filled\",\n        width = 3.5,\n        height = 1,\n        pos = \"18.25,3.5!\",\n        tooltip = \"Reports excluded (other)\"\n      ]\n", "",prismaplot$x$diagram)
-# prismaplot
-# 
-# 
-# class(prismaplot)
-# prisdiagram <- prismaplot$x$diagram
-# print(prisdiagram)
-# class(prisdiagram)
-# # PRISMA_save(prismaplot,
-# #             filename = "./output/PRISMA_summary-04-1.pdf",
-# #             filetype = NA,
-# #             overwrite = T)
-# 
-# 
-# class(upd_dat$year)
-# upd_dat <- upd_dat %>% mutate(year=as.numeric(year))
-# rmvdrows<-anti_join(upd_dat, initial_dat, by="title")

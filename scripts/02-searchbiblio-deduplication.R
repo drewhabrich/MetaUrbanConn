@@ -1,12 +1,12 @@
 ## HEADER---------------------------
-## Script name: 02-searchbiblio-deduplicaiton
+## Script name: 02-searchbiblio-deduplication
 ##
 ## Purpose of script: deduplicate records downloaded using initial search string from search databases
 ##
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-04-21
-## Date last Modified: 2023-10-24 
+## Date last Modified: 2024-11-14 
 ##
 ## Email: 
 ## - andrhabr@gmail.com
@@ -14,13 +14,11 @@
 ## 
 ## Notes ---------------------------
 # The .ris files were 'repaired' (empty info filled automatically using DOIs with 'bibfix' shiny app)
+rm(list = ls())
 
 ## 1. Load relevant packages--------
-library(tidyverse) #v2.0.0
-library(synthesisr) #v0.3.0
-# Install CiteSource (currently only on github)
-# remotes::install_github("ESHackathon/CiteSource") #uncomment if needed
-library(CiteSource) #v0.0.1
+remotes::install_github("ESHackathon/CiteSource") #uncomment if needed
+pacman::p_load(tidyverse, synthesisr, CiteSource)
 
 ## 2. Import search results and deduplicate with CiteSource (+metadata) ----
 # what files are in the folder?
@@ -44,46 +42,30 @@ metadata_tbl <- tibble::tribble(
 
 ## Read in citations using metadata table
 bibmeta <- read_citations(metadata = metadata_tbl)
-glimpse(bibmeta)
-
-## how many NAs are there per column
-bibmeta %>% summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
 
 ## remove redundant columns, and prepare columns for deduplication effort
 bibs <- bibmeta %>% 
   mutate(isbn = issn) %>% 
   mutate(litsource = if_else(is.na(source), journal, source)) %>% #if 'source' is empty, fill with 'journal'
-  relocate(litsource, .after = journal)
-
-bibs %>% summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
-
+  relocate(litsource, .after = journal) %>% 
 ## fix journal/source names to be consistently in title-case
-bibs <- bibs %>% 
   mutate(litsource = str_replace_all(litsource, "&", "and")) %>% 
   mutate(litsource = str_to_lower(litsource)) %>% #create modified column
   mutate(litsource = str_to_title(litsource)) %>% #coerce to title-case
   mutate(litsource = str_replace_all(litsource, "\\b(And|In|Of|The|For)\\b", str_to_lower)) #conjunctions to lowercase
 
-# How many empty rows are there per column and per source?
-bibs %>% group_by(cite_source) %>% summarise(across(everything(), ~ sum(is.na(.)))) %>% as.data.frame(.)
-
 ### 2.1. Deduplication with source information ----
 # Deduplicate citations 
 bib_j <- bibs %>% mutate(journal = litsource) %>% select(!c("source","litsource"))
-dedup_results <- dedup_citations(bib_j, manual = T) #you can manually review duplicates if unsure
-## Manually review the similarities
-View(dedup_results$manual_dedup)
+dedup_results <- dedup_citations(bib_j, manual = T) 
+#View(dedup_results$manual_dedup) #Uncomment to manually review duplicates if unsure
 
 # Get unique citations. This yields a dataframe of all records with duplicates merged, but the originating source information maintained in a new variable called cite_source.
 unique_citations <- dedup_results$unique
-unique_citations %>% summarise(across(everything(), ~ sum(any(is.na(.)))) %>% as_tibble())
 
-### Let's check and remove some entries from proquest manually, since there were some issues with the bibliographic format (empty info), particularly for proquest
+# Remove broken ProQuest entries; Issues with the bibliographic format (empty info)
 unique_citations <- unique_citations %>% 
   mutate_all(~if_else(str_detect(., "^$"), NA_character_, .)) %>% filter(!is.na(title) == T)
-
-unique_citations %>% summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
-
 # Count number of unique and non-unique citations from different sources and labels. 
 n_unique <- count_unique(unique_citations, include_references = F)
 # For each unique citation, determine which sources were present
@@ -140,18 +122,3 @@ unique_citations %>%
 
 ## SAVE TO FILE
 export_ris(unique_citations, filename = "./data/02-dedup_citesource.ris", source_field = "DB", label_field = "N1")
-
-# 3. WIP-PRISMA information---- 
-# Download the PRISMA template csv and populate the relevant cells (duplicates, n-source specific)
-# prismainfo <- read_csv(system.file("extdata", "PRISMA.csv", package = "PRISMA2020"))
-# glimpse(prismainfo)
-# prismainfo[13,"n"] <- nrow(import)-nrow(final_res) #number of duplicates
-# prismainfo[6, "n"] <- str_c("Web of Science, ", nrow(wos), #find the number of entries per source
-#                             "; SCOPUS, ", nrow(scop), 
-#                             "; ProQuest, ", nrow(proq),
-#                             "; bioRxiv, ", nrow(biox),
-#                             "; ConservationCorridor, ", nrow(ccorg))
-# 
-# # Write the template to csv to populate later when we generate the PRISMA diagram.
-# write_csv(prismainfo, file = "./data/PRISMA_template-02.csv")
-

@@ -6,33 +6,25 @@
 ## Author: Andrew Habrich
 ##
 ## Date Created: 2023-04-21
-## Date last Modified: 2023-10-25
+## Date last Modified: 2024-11-14
 ##
 ## Email: 
 ## - andrhabr@gmail.com
 ## - andrewhabrich@cmail.carleton.ca
 ## 
 ## Notes ---------------------------
+rm(list = ls())
 
 ## 1. Load relevant packages--------
-## install.packages("tidyverse","metagear","PRISMA2020","rcrossref) install packages as needed
-#library(plyr) #plyr needs to be loaded BEFORE tidyverse to prevent issues with dplyr
-library(tidyverse) #v2.0.0
-library(metagear) #v0.7.0
+pacman::p_load(tidyverse, metagear)
 
 # 2. Read in the bibliographic data set ------------------------------------
 initial_dat <- read_csv("./data/03-clean_bibliography.csv", col_names = T)
 
-# quickly verify that everything is in order:
-glimpse(initial_dat)
-# check for missing data
-initial_dat %>% 
-  summarise(across(everything(), ~ sum(is.na(.))) %>% as_tibble())
-
 # 3. MetaGear screening ---------------------------------------------------
 ### Create the review excel sheet and initialize format for abstract screening
-
-# bib_unscreened <- effort_distribute(initial_dat, reviewers="drew_04", initialize = T, save_split = T, directory = "./data/") #only need to run once, uncomment if needed
+#only need to run once, uncomment if needed
+# bib_unscreened <- effort_distribute(initial_dat, reviewers="drew_04", initialize = T, save_split = T, directory = "./data/") 
 
 ### Use the built in GUI for metaGear to screen articles -----
 # NOTE: YOU HAVE TO SAVE BEFORE QUITTING THE GUI OR YOU'LL LOSE PROGRESS, it will update the effort_*reviewer*.csv file
@@ -55,7 +47,6 @@ abstract_screener(file = "./data/effort_drew_04.csv",
 # 4 Screening effort summary and visualization-----
 #bibscreened<-effort_merge(directory="./output") #this will merge all effort_*reviewer*.csv files together
 bibscreened <- read_csv("./data/effort_drew_04.csv", col_names = T)
-unique(bibscreened$INCLUDE) #how many categories are there?
 
 # generate a summary table by each decision category
 screensummary_table <- bibscreened %>% 
@@ -69,7 +60,7 @@ screensummary_table <- bibscreened %>%
                              INCLUDE == "REVIEW" ~ "Review/Methodology/Framework articles",
                              TRUE ~ "IN PROGRESS, not vetted yet")) %>% 
   arrange(desc(percentage))
-write_csv(screensummary_table, file="./output/tables/04-init_screenres_table.csv")
+write_csv(screensummary_table, file="./output/tables/04-initial_screenres_table.csv")
 
 # What journals are the YES, MAYBE
 bibscreened %>% 
@@ -106,11 +97,6 @@ bibscreened %>% filter(INCLUDE=="YES") %>%
 bibscreened %>% filter(INCLUDE=="MAYBE") %>% 
   group_by(journal) %>% count(journal) %>% 
   arrange(desc(n)) 
-### How many journals have more than 5 entries (across all decision groups)
-bibscreened %>% 
-  group_by(journal) %>% count(journal) %>% 
-  arrange(desc(n)) %>% 
-  filter(n >= 5) %>% n_distinct() 
 
 ## Plot all the INCLUDE categories
 ### pull the list of journals with >5 entries
@@ -131,38 +117,3 @@ bibscreened %>%
     theme(axis.text.y = element_text(size = 5)) + #specific modifications to the theme
   scale_y_discrete(labels = function(x) str_trunc(x, 35)) +
   scale_x_continuous(limits = c(0, 120), breaks = seq(0, 120, 5), expand=expand_scale(mult=c(0,0.1))) 
-
-# # 5. PRISMA screening results - THIS CAN BE MODIFIED--------------
-# library(PRISMA2020) #v1.1.1
-# # Read in the template from the package directory; edit boxtext column to change text
-# pristemp <- read.csv("./data/PRISMA_template-02.csv") 
-# prisma <- PRISMA_data(pristemp) #coerced to list, you can also modify this list to generate the flowdiagram. 
-# 
-# # Populate the PRISMA list from dataframe information!
-# prisma$newstud_text <- "Identification of potential candidate studies for meta-analysis"
-# prisma$records_screened <- nrow(bibscreened) 
-# prisma$records_excluded <- nrow(bibscreened %>% filter(INCLUDE == "NOtitle"))
-# prisma$records_excluded_text <- "Records excluded: \n- Not terrestrial-based\n- Not in urban ecosystem\n- No indication of config/connectivity metric"
-#   
-# prisma$dbr_sought_reports <- nrow(bibscreened) - nrow(bibscreened %>% filter(INCLUDE == "NOtitle"))
-# prisma$dbr_notretrieved_reports <- nrow(bibscreened %>% filter(INCLUDE == "NOabstr"))
-# prisma$dbr_notretrieved_reports_text <- "Records excluded: \nNot in an urban area or no indication of \nconfiguration or connectivity metric used."
-#   
-# prisma$dbr_assessed <- nrow(bibscreened) - nrow(bibscreened %>% filter(INCLUDE == "NOtitle")) - nrow(bibscreened %>% filter(INCLUDE == "NOabstr"))
-# prisma$dbr_excluded <- bibscreened %>% group_by(INCLUDE) %>% filter(INCLUDE %in% c("YES", "MAYBE", "REVIEW")) %>% count() %>% as.data.frame() %>% rename("reason"=1) 
-# prisma$new_studies <- bibscreened %>% filter(INCLUDE %in% c("YES","MAYBE")) %>% nrow() 
-# prisma$new_reports <- bibscreened %>% filter(INCLUDE %in% c("REVIEW")) %>% nrow() 
-# prisma$included_text <- "Screen full-text"
-# 
-# # create and save the PRISMA plot
-# prismaplot <- PRISMA_flowdiagram(prisma,
-#                            fontsize = 12,
-#                            interactive = F,
-#                            previous = F,
-#                            other = F,
-#                            detail_databases = T,
-#                            detail_registers = F)
-# PRISMA_save(prismaplot,
-#             filename = "./output/figures/PRISMA_summary-04.pdf",
-#             filetype = NA,
-#             overwrite = T)

@@ -1,3 +1,4 @@
+# This script is used to install and load necessary packages and set up personal authentication token for Github
 ### THIS SCRIPT IS NOT NECESSARY TO RUN EVERYTIME ###
 #Use this package to communicate with Github through R
 install.packages("usethis") 
